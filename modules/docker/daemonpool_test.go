@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	//	"log"
 	"testing"
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/containerops/generator/modules"
+	generatorUtils "github.com/containerops/wrench/utils"
 )
 
 var (
@@ -34,8 +33,8 @@ func Test_GetOnDaemon(t *testing.T) {
 
 		//connection  docker  deamon
 		endpoint := fmt.Sprint("tcp://", daemonUrl, ":", daemonPort)
-		client, _ := modules.NewClient(endpoint)
-		imgs, _ := client.ListImages(modules.ListImagesOptions{All: false})
+		client, _ := generatorUtils.NewClient(endpoint)
+		imgs, _ := client.ListImages(generatorUtils.ListImagesOptions{All: false})
 
 		// Print daemon images list
 		for _, img := range imgs {
@@ -56,7 +55,7 @@ func Test_GetOnDaemon(t *testing.T) {
 		tr.WriteHeader(&tar.Header{Name: "Dockerfile", Size: int64(len(content)), ModTime: t, AccessTime: t, ChangeTime: t})
 		tr.Write(content)
 		tr.Close()
-		opts := modules.BuildImageOptions{
+		opts := generatorUtils.BuildImageOptions{
 			Name:         "test2",
 			InputStream:  inputbuf,
 			OutputStream: outputbuf,
