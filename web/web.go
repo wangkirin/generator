@@ -12,4 +12,6 @@ func SetGeneratorMacaron(m *macaron.Macaron) {
 	middleware.SetMiddlewares(m)
 	//Setting Router
 	router.SetRouters(m)
+
+	m.Use(macaron.Static("static"))
 }

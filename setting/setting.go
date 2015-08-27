@@ -7,20 +7,22 @@ import (
 )
 
 var (
-	conf          config.ConfigContainer
-	AppName       string
-	Usage         string
-	Version       string
-	Author        string
-	Email         string
-	RunMode       string
-	ListenMode    string
-	HttpsCertFile string
-	HttpsKeyFile  string
-	LogPath       string
-	DBURI         string
-	DBPasswd      string
-	DBDB          int64
+	conf           config.ConfigContainer
+	AppName        string
+	Usage          string
+	Version        string
+	Author         string
+	Email          string
+	RunMode        string
+	ListenMode     string
+	HttpsCertFile  string
+	HttpsKeyFile   string
+	LogPath        string
+	DBURI          string
+	DBPasswd       string
+	DBDB           int64
+	DOCKERURL      string
+	DOCKERFILEPATH string
 )
 
 func init() {
@@ -73,6 +75,14 @@ func init() {
 
 	if dburi := conf.String("db::uri"); dburi != "" {
 		DBURI = dburi
+	}
+
+	if dockerurl := conf.String("docker::url"); dockerurl != "" {
+		DOCKERURL = dockerurl
+	}
+
+	if dockerfilepath := conf.String("docker::tarpath"); dockerfilepath != "" {
+		DOCKERFILEPATH = dockerfilepath
 	}
 
 	DBPasswd = conf.String("db::passwd")
