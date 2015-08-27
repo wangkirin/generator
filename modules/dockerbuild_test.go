@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"regexp"
+	//"regexp"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -28,7 +28,7 @@ func Test_DockerBuild(t *testing.T) {
 		buildImageConfig := &BuildImage{
 			Context:        dockerBuildContext,
 			RepoName:       "your_image_name",
-			SuppressOutput: false,
+			SuppressOutput: true,
 		}
 
 		reader, err := docker.BuildImage(buildImageConfig)
@@ -47,23 +47,28 @@ func Test_DockerBuild(t *testing.T) {
 				break
 			}
 
-			// find \u001b[91m
-			reg, _ := regexp.Compile(`\\u001b\[91m`)
 			jsonText := string(buf[:n])
-			if reg.MatchString(jsonText) {
-				reg, err := regexp.Compile(`[\d]+\%`)
+			fmt.Println(jsonText)
 
-				if err == nil {
-					percentText := reg.FindString(jsonText)
-					if len(percentText) > 0 {
-						fmt.Print(percentText, "|")
+			// find \u001b[91m
+			/*
+				reg, _ := regexp.Compile(`\\u001b\[91m`)
+				jsonText := string(buf[:n])
+				if reg.MatchString(jsonText) {
+					reg, err := regexp.Compile(`[\d]+\%`)
+
+					if err == nil {
+						percentText := reg.FindString(jsonText)
+						if len(percentText) > 0 {
+							fmt.Print(percentText, "|")
+						}
 					}
-				}
-			} else {
-				fmt.Println(jsonText)
-				// chunks=append(chunks,buf[:n]...)
+				} else {
+					fmt.Println(jsonText)
+					// chunks=append(chunks,buf[:n]...)
 
-			}
+				}
+			*/
 		}
 	})
 }

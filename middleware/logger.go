@@ -31,5 +31,6 @@ func logger() macaron.Handler {
 		}
 		Log.Trace("[%s] [%s]", ctx.Req.Method, ctx.Req.RequestURI)
 		Log.Trace("[Header] %v", ctx.Req.Header)
+
 	}
 }

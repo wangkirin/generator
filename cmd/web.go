@@ -13,7 +13,6 @@ import (
 
 	"github.com/containerops/generator/setting"
 	"github.com/containerops/generator/web"
-	"github.com/containerops/wrench/db"
 	"github.com/containerops/wrench/utils"
 )
 
@@ -30,18 +29,14 @@ var CmdWeb = cli.Command{
 		},
 		cli.IntFlag{
 			Name:  "port",
-			Value: 80,
-			Usage: "web service listen at port 80; if run with https will be 443.",
+			Value: 9999,
+			Usage: "web service listen at port 9999; if run with https will be 443.",
 		},
 	},
 }
 
 func runWeb(c *cli.Context) {
 	m := macaron.New()
-
-	if err := db.InitDB(setting.DBURI, setting.DBPasswd, setting.DBDB); err != nil {
-		fmt.Printf("Connect Database Error %s", err.Error())
-	}
 
 	//Set Macaron Web Middleware And Routers
 	web.SetGeneratorMacaron(m)
