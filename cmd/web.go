@@ -29,8 +29,8 @@ var CmdWeb = cli.Command{
 		},
 		cli.IntFlag{
 			Name:  "port",
-			Value: 9999,
-			Usage: "web service listen at port 9999; if run with https will be 443.",
+			Value: 8080,
+			Usage: "web service listen at port 8080; if run with https will be 443.",
 		},
 	},
 }

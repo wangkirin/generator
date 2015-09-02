@@ -2,17 +2,19 @@ package cmd
 
 import (
 	"archive/tar"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/codegangsta/cli"
-	. "github.com/containerops/generator/modules"
-	"github.com/containerops/generator/setting"
-	"golang.org/x/net/websocket"
 	"io"
 	"log"
 	"net/http"
-	"os"
+
+	"github.com/codegangsta/cli"
+	"golang.org/x/net/websocket"
+
+	. "github.com/containerops/generator/modules"
+	"github.com/containerops/generator/setting"
 )
 
 var CmdWebSocket = cli.Command{
@@ -35,7 +37,7 @@ var CmdWebSocket = cli.Command{
 }
 
 //make chan buffer write to websocket
-var ws_writer = make(chan string, 100000)
+var ws_writer = make(chan string, 65535)
 
 func SendMsg(ws *websocket.Conn) {
 
@@ -45,7 +47,7 @@ func SendMsg(ws *websocket.Conn) {
 			msg := <-ws_writer
 
 			if err := websocket.Message.Send(ws, msg); err != nil {
-				fmt.Println("Can't send", err.Error())
+				log.Println("Can't send", err.Error())
 				break
 			}
 		}
@@ -53,7 +55,7 @@ func SendMsg(ws *websocket.Conn) {
 
 }
 
-type Image struct {
+type BuildImageInfo struct {
 	Name       string `json:"name"`
 	Dockerfile string `json:"dockerfile"`
 }
@@ -61,7 +63,6 @@ type Image struct {
 func ReceiveMsg(ws *websocket.Conn) {
 	SendMsg(ws)
 
-	log.Println("In ReceiveMsg")
 	var msg string
 
 	for {
@@ -70,97 +71,64 @@ func ReceiveMsg(ws *websocket.Conn) {
 			return
 		}
 
-		log.Println("before json ", msg)
-
-		var image Image
-		if err := json.Unmarshal([]byte(msg), &image); err != nil {
+		var buildImageInfo BuildImageInfo
+		if err := json.Unmarshal([]byte(msg), &buildImageInfo); err != nil {
 			log.Println(err.Error())
 		}
 
-		dockerfile, err := base64.StdEncoding.DecodeString(image.Dockerfile)
+		dockerfileBytes, err := base64.StdEncoding.DecodeString(buildImageInfo.Dockerfile)
 		if err != nil {
-
 			log.Println("[ErrorInfo]", err.Error())
 		}
-		log.Println(string(dockerfile))
+		// Create a buffer to write our archive to.
+		buf := new(bytes.Buffer)
 
-		//save msg to file
-		tempfile := "Dockerfile"
-		fout, err := os.Create(tempfile)
-		defer fout.Close()
-		if err != nil {
-			fmt.Println(tempfile, err)
-			return
+		// Create a new tar archive.
+		tw := tar.NewWriter(buf)
+
+		// Add some files to the archive.
+		var files = []struct {
+			Name, Body string
+		}{
+			{"Dockerfile", string(dockerfileBytes)},
 		}
-		fout.WriteString(string(dockerfile) + "\r\n")
-
-		//tar file to tar
-		fw, err := os.Create(setting.DOCKERFILEPATH)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
+		for _, file := range files {
+			hdr := &tar.Header{
+				Name: file.Name,
+				Mode: 0600,
+				Size: int64(len(file.Body)),
+			}
+			if err := tw.WriteHeader(hdr); err != nil {
+				log.Fatalln(err)
+			}
+			if _, err := tw.Write([]byte(file.Body)); err != nil {
+				log.Fatalln(err)
+			}
 		}
-		defer fw.Close()
-
-		tw := tar.NewWriter(fw)
-		defer tw.Close()
-
-		fo, err := os.Open(tempfile)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
+		// Make sure to check the error on Close.
+		if err := tw.Close(); err != nil {
+			log.Fatalln(err)
 		}
-
-		fs, err := os.Stat(tempfile)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-		//tar header
-		h := new(tar.Header)
-		h.Name = tempfile
-		h.Size = fs.Size()
-		h.Mode = int64(fs.Mode())
-		h.ModTime = fs.ModTime()
-
-		//write tar header
-		err = tw.WriteHeader(h)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
-		// copy file content
-		_, err = io.Copy(tw, fo)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
-		log.Println("image.Name", image.Name)
-
+		tarReader := bytes.NewReader(buf.Bytes())
 		//build docker
-		BuildDockerImage(image.Name)
+		BuildDockerImage(buildImageInfo.Name, tarReader)
 
 	}
 }
 
-func BuildDockerImage(imagename string) {
+func BuildDockerImage(imageName string, dockerfileTarReader io.Reader) {
 
-	// Init the clientdocker, _ := NewDockerClient(testDockerUrl, nil)
-	docker, _ := NewDockerClient(setting.DOCKERURL, nil)
-	// Build a docker image
-	// some.tar contains the build context (Dockerfile any any files it needs to add/copy)
-	dockerBuildContext, err := os.Open(setting.DOCKERFILEPATH)
-	defer dockerBuildContext.Close()
+	log.Println("setting.DockerGenUrl:::", setting.DockerGenUrl)
+
+	dockerClient, _ := NewDockerClient(setting.DockerGenUrl, nil)
 
 	buildImageConfig := &BuildImage{
-		Context:        dockerBuildContext,
-		RepoName:       imagename,
+		Context:        dockerfileTarReader,
+		RepoName:       imageName,
 		SuppressOutput: true,
 	}
 
-	reader, err := docker.BuildImage(buildImageConfig)
+	reader, err := dockerClient.BuildImage(buildImageConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -178,16 +146,13 @@ func BuildDockerImage(imagename string) {
 			break
 		}
 
-		//ctx.Write(buf[:n])
 		ws_writer <- string(buf[:n])
 	}
 
 }
 
 func runWebSocket(c *cli.Context) {
-
 	//start websocket service
 	http.Handle("/", websocket.Handler(ReceiveMsg))
-
 	http.ListenAndServe(":20000", nil)
 }
