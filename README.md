@@ -1,6 +1,20 @@
 # Generator
 ===========
 
+##send Dockerfile
+
+FROM       ubuntu
+MAINTAINER MengFanliang <mengfanliang@huawei.com>
+
+ENV TZ "Asia/Shanghai"
+ENV TERM xterm
+
+RUN apt-get install wget -y
+
+RUN wget https://get.docker.com/builds/Darwin/x86_64/docker-latest
+
+
+EXPOSE 22
 
 ## websocket send build dockerfile json
 
