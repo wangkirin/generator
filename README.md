@@ -25,24 +25,36 @@ EXPOSE 22
 runmode = dev
 
 listenmode = http
+
 httpscertfile = cert/containerops/containerops.crt
+
 httpskeyfile = cert/containerops/containerops.key
 
 [log]
+
 filepath = log/containerops-log
 
 [db]
+
 uri = localhost:6379
+
 passwd = containerops
+
 db = 8
 
 [dockyard]
 path = data
+
 domains = containerops.me
+
 registry = 0.9
+
 distribution = registry/2.0
+
 standalone = true
 
 [generator]
+
 genurl = 192.168.19.112:9999
+
 dockerfilepath  = /tmp
