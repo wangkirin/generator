@@ -21,8 +21,8 @@ var (
 	DBURI          string
 	DBPasswd       string
 	DBDB           int64
-	DOCKERURL      string
-	DOCKERFILEPATH string
+	DockerGenUrl   string
+	DockerfilePath string
 )
 
 func init() {
@@ -77,12 +77,12 @@ func init() {
 		DBURI = dburi
 	}
 
-	if dockerurl := conf.String("docker::url"); dockerurl != "" {
-		DOCKERURL = dockerurl
+	if dockerGenUrl := conf.String("generator::genurl"); dockerGenUrl != "" {
+		DockerGenUrl = dockerGenUrl
 	}
 
-	if dockerfilepath := conf.String("docker::tarpath"); dockerfilepath != "" {
-		DOCKERFILEPATH = dockerfilepath
+	if dockerfilePath := conf.String("generator::dockerfilepath"); dockerfilePath != "" {
+		DockerfilePath = dockerfilePath
 	}
 
 	DBPasswd = conf.String("db::passwd")
