@@ -11,11 +11,19 @@ import (
 	"net/http"
 
 	"github.com/codegangsta/cli"
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 
 	. "github.com/containerops/generator/modules"
 	"github.com/containerops/generator/setting"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 var CmdWebSocket = cli.Command{
 	Name:        "websocket",
@@ -37,21 +45,25 @@ var CmdWebSocket = cli.Command{
 }
 
 //make chan buffer write to websocket
-var ws_writer = make(chan string, 65535)
+var ws_writer = make(chan string, 1024)
 
 func SendMsg(ws *websocket.Conn) {
 
-	go func() {
+	defer ws.Close()
 
-		for {
-			msg := <-ws_writer
+	for {
+		msg := <-ws_writer
 
-			if err := websocket.Message.Send(ws, msg); err != nil {
-				log.Println("Can't send", err.Error())
-				break
-			}
+		if msg == "" {
+			continue
 		}
-	}()
+
+		// write message to client
+		if err := ws.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
+			log.Println("Can't send", err.Error())
+			break
+		}
+	}
 
 }
 
@@ -61,18 +73,26 @@ type BuildImageInfo struct {
 }
 
 func ReceiveMsg(ws *websocket.Conn) {
-	SendMsg(ws)
+
+	defer ws.Close()
 
 	var msg string
 
 	for {
-		if err := websocket.Message.Receive(ws, &msg); err != nil {
+		_, message, err := ws.ReadMessage()
+
+		if err != nil {
 			log.Println("Can't receive %s", err.Error())
-			return
+			break
+		}
+
+		if message == "" {
+			log.Println("Receive message is null")
+			break
 		}
 
 		var buildImageInfo BuildImageInfo
-		if err := json.Unmarshal([]byte(msg), &buildImageInfo); err != nil {
+		if err := json.Unmarshal(message, &buildImageInfo); err != nil {
 			log.Println(err.Error())
 		}
 
@@ -151,8 +171,25 @@ func BuildDockerImage(imageName string, dockerfileTarReader io.Reader) {
 
 }
 
+// ServeWs handles websocket requests from the peer.
+func ServeWs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	go SendMsg(ws)
+	ReceiveMsg(ws)
+}
+
 func runWebSocket(c *cli.Context) {
 	//start websocket service
-	http.Handle("/", websocket.Handler(ReceiveMsg))
+	http.HandleFunc("/", ServeWs)
 	http.ListenAndServe(":20000", nil)
 }
