@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+
 	"github.com/Unknwon/macaron"
 	. "github.com/containerops/generator/modules"
 	"github.com/containerops/generator/setting"
 	"github.com/gorilla/websocket"
-	"io"
-	"log"
-	"net/http"
 )
 
 var upgrader = websocket.Upgrader{
