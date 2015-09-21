@@ -8,7 +8,5 @@ import (
 func SetRouters(m *macaron.Macaron) {
 
 	m.Get("/", handler.IndexHandler)
-	//	m.Get("/ws", handler.BuildInfoHandler)
-	//http.HandleFunc("/ws", handler.BuildInfoHandler)
 	m.Get("/ws", handler.ServeWs)
 }

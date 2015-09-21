@@ -50,25 +50,6 @@ func Test_DockerBuild(t *testing.T) {
 			jsonText := string(buf[:n])
 			fmt.Println(jsonText)
 
-			// find \u001b[91m
-			/*
-				reg, _ := regexp.Compile(`\\u001b\[91m`)
-				jsonText := string(buf[:n])
-				if reg.MatchString(jsonText) {
-					reg, err := regexp.Compile(`[\d]+\%`)
-
-					if err == nil {
-						percentText := reg.FindString(jsonText)
-						if len(percentText) > 0 {
-							fmt.Print(percentText, "|")
-						}
-					}
-				} else {
-					fmt.Println(jsonText)
-					// chunks=append(chunks,buf[:n]...)
-
-				}
-			*/
 		}
 	})
 }
