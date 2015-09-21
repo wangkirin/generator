@@ -10,10 +10,9 @@ import (
 	"net/http"
 
 	"github.com/Unknwon/macaron"
-	"github.com/gorilla/websocket"
-
 	. "github.com/containerops/generator/modules"
 	"github.com/containerops/generator/setting"
+	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
