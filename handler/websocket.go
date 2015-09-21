@@ -1,20 +1,17 @@
-package cmd
+package handler
 
 import (
 	"archive/tar"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"github.com/Unknwon/macaron"
+	. "github.com/containerops/generator/modules"
+	"github.com/containerops/generator/setting"
+	"github.com/gorilla/websocket"
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/codegangsta/cli"
-	"github.com/gorilla/websocket"
-
-	. "github.com/containerops/generator/modules"
-	"github.com/containerops/generator/setting"
 )
 
 var upgrader = websocket.Upgrader{
@@ -22,25 +19,6 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 4096,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
-	},
-}
-
-var CmdWebSocket = cli.Command{
-	Name:        "websocket",
-	Usage:       "start generator websocket service",
-	Description: "get Dockerfile,send build image info.",
-	Action:      runWebSocket,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "address",
-			Value: "0.0.0.0",
-			Usage: "websocket service listen ip, default is 0.0.0.0; if listen with Unix Socket, the value is sock file path.",
-		},
-		cli.IntFlag{
-			Name:  "port",
-			Value: 20000,
-			Usage: "websocket service listen at port 20000;",
-		},
 	},
 }
 
@@ -76,7 +54,7 @@ func ReceiveMsg(ws *websocket.Conn) {
 
 	defer ws.Close()
 
-	var msg string
+	//var msg string
 
 	for {
 		_, message, err := ws.ReadMessage()
@@ -86,7 +64,7 @@ func ReceiveMsg(ws *websocket.Conn) {
 			break
 		}
 
-		if message == "" {
+		if string(message) == "" {
 			log.Println("Receive message is null")
 			break
 		}
@@ -150,7 +128,7 @@ func BuildDockerImage(imageName string, dockerfileTarReader io.Reader) {
 
 	reader, err := dockerClient.BuildImage(buildImageConfig)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 	}
 
 	buf := make([]byte, 4096)
@@ -171,25 +149,21 @@ func BuildDockerImage(imageName string, dockerfileTarReader io.Reader) {
 
 }
 
-// ServeWs handles websocket requests from the peer.
-func ServeWs(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
+func ServeWs(ctx *macaron.Context) {
+
+	req := ctx.Req.Request
+	resp := ctx.Resp
+	if req.Method != "GET" {
+		http.Error(resp, "Method not allowed", 405)
 		return
 	}
 
-	ws, err := upgrader.Upgrade(w, r, nil)
+	ws, err := upgrader.Upgrade(resp, req, nil)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return
 	}
 
 	go SendMsg(ws)
 	ReceiveMsg(ws)
-}
-
-func runWebSocket(c *cli.Context) {
-	//start websocket service
-	http.HandleFunc("/", ServeWs)
-	http.ListenAndServe(":20000", nil)
 }

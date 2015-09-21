@@ -3,7 +3,7 @@
  <head> 
   <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org" /> 
   <script src="http://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
-  <script src="base64.js" type="text/javascript"></script> 
+  <script src="js/base64.js" type="text/javascript"></script> 
   <title>websokcet test</title> 
  </head> 
  <body> 
@@ -14,7 +14,7 @@ $(function() {
     var sock;
     var msg = $("#msg");
     var log = $("#log");
-    var wsuri = "ws://127.0.0.1:20000";
+    var wsuri = "ws://192.168.19.111:8080/ws";
     //var wsuri = "ws://127.0.0.1:9999/ws";
 
     function appendLog(msg) {

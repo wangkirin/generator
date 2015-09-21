@@ -25,7 +25,7 @@ func main() {
 
 	app.Commands = []cli.Command{
 		cmd.CmdWeb,
-		cmd.CmdWebSocket,
+		//		cmd.CmdWebSocket,
 	}
 
 	app.Flags = append(app.Flags, []cli.Flag{}...)
