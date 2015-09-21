@@ -3,18 +3,28 @@
  <head> 
   <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org" /> 
   <script src="http://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
-  <script src="../js/base64.js" type="text/javascript"></script> 
+  <script src="js/base64.js" type="text/javascript"></script> 
   <title>websokcet test</title> 
  </head> 
  <body> 
 <script type = "text/javascript">
-var sock = null;
-var wsuri = "ws://192.168.19.51:20000";
 
-/*
-window.onload = function() {
 
-    console.log("onload");
+$(function() {
+    var sock;
+    var msg = $("#msg");
+    var log = $("#log");
+    var wsuri = "ws://192.168.19.111:8080/ws";
+    //var wsuri = "ws://127.0.0.1:9999/ws";
+
+    function appendLog(msg) {
+        var d = log[0]
+        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+        msg.appendTo(log)
+        if (doScroll) {
+            d.scrollTop = d.scrollHeight - d.clientHeight;
+        }
+    }
 
     try {
         sock = new WebSocket(wsuri);
@@ -32,89 +42,58 @@ window.onload = function() {
 
     sock.onclose = function(e) {
         console.log("connection closed (" + e.code + ")");
+        appendLog($("<div><b>Connection closed.</b></div>"));
     }
 
     sock.onmessage = function(e) {
-       // alert('接收消息');
-       // alert(e.data);
         console.log("message received: " + e.data);
-
-        $('#log').append('<p>' + e.data + '<p>');
-        $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
+        appendLog($("<div/>").text(e.data));
     }
+    
+    $("#submit").click(function(){
 
-};
-*/
-function Connect(){
-	console.log("onload");
+        if (!sock) {
+            return false;
+        }
 
-    try {
-        sock = new WebSocket(wsuri);
-    } catch(e) {
-        alert(e.Message);
-    }
+        imagename=$("#imagename").val();
+        alert(imagename);
+        if (imagename == ""){
+          alert("ImageName can not be null!");
+          return false;
+        }
 
-    sock.onopen = function() {
-        console.log("connected to " + wsuri);
-    }
+        dockerfile=$("#dockerfile").val();
+        alert(dockerfile);
+        if (dockerfile == ""){
+          alert("DockerFile can not be null!");
+          return false;
+        }
 
-    sock.onerror = function(e) {
-        console.log(" error from connect " + e);
-    }
+        base64_str = Base64.encode(dockerfile)
 
-    sock.onclose = function(e) {
-        console.log("connection closed (" + e.code + ")");
-    }
+        content = '{"imagename":"';
+        content += imagename;
+        content += '","dockerfile":"';
+        content += base64_str;
+        content += '"}';
 
-    sock.onmessage = function(e) {
-       // alert('接收消息');
-       // alert(e.data);
-        console.log("message received: " + e.data);
+        alert(content);
 
-        $('#log').append('<p>' + e.data + '<p>');
-        $('#log').get(0).scrollTop = $('#log').get(0).scrollHeight;
-    }
-}
-
-function Send(){
-	//alert("submit");
-	imagename=$("#imagename").val();
-	alert(imagename);
-	if (imagename == ""){
-		alert("ImageName can not be null!");
-		return;
-	}
-	dockerfile=$("#dockerfile").val();
-	alert(dockerfile);
-	if (dockerfile == ""){
-		alert("DockerFile can not be null!");
-		return;
-	}
-
-	base64_str = Base64.encode(dockerfile)
-
-	content = '{"imagename":"';
-	content += imagename;
-	content += '","dockerfile":"';
-	content += base64_str;
-	content += '"}';
-
-	alert(content);;
-	sock.send(content);		
-
-	Connect();
-
-	return false;
-};
+        sock.send(content);
+        
+        return false;
+    });
+}) 
 </script> 
-  <h1>WebSocket chat with server</h1> 
+  <h1>Build image screen</h1> 
   <div id="log" style="height: 300px;overflow-y: scroll;border: 1px solid #CCC;"></div> 
   <div> 
    <form> 
     <p>ImageNmae: <input id="imagename" type="text" /></p> 
     <p>DockerFile: </p> 
     <textarea id="dockerfile" rows="10" cols="30"></textarea>
-    <button id="Submit" onclick="Send();">Submit</button>
+    <button id="submit">Submit</button>
    </form> 
   </div>   
  </body>
