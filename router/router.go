@@ -9,4 +9,5 @@ func SetRouters(m *macaron.Macaron) {
 
 	m.Get("/", handler.IndexHandler)
 	m.Get("/ws", handler.ServeWs)
+	m.Get("/show", handler.GetLog)
 }
