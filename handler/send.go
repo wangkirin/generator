@@ -81,7 +81,15 @@ func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Rea
 	}
 	defer c.Close()
 
-	dockerClient, _ := NewDockerClient(setting.DockerGenUrl, nil)
+	dockerUrl, err := redis.String(c.Do("SRANDMEMBER", "DockerList"))
+	if err != nil {
+		log.Fatalln("err when get docker list", err)
+		return
+	}
+
+	log.Println("=======================>\nselect docker ", dockerUrl, "to build ......")
+
+	dockerClient, _ := NewDockerClient(dockerUrl, nil)
 
 	buildImageConfig := &BuildImage{
 		Context:        dockerfileTarReader,
