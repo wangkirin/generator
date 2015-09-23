@@ -5,13 +5,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"io"
+	//"io"
 	"log"
 	"net/http"
 
 	"github.com/Unknwon/macaron"
-	. "github.com/containerops/generator/modules"
-	"github.com/containerops/generator/setting"
+	//. "github.com/containerops/generator/modules"
+	//"github.com/containerops/generator/setting"
 	"github.com/gorilla/websocket"
 )
 
@@ -110,44 +110,9 @@ func ReceiveMsg(ws *websocket.Conn) {
 		}
 		tarReader := bytes.NewReader(buf.Bytes())
 		//build docker
-		BuildDockerImage(buildImageInfo.Name, tarReader)
+		BuildDockerImage(buildImageInfo.Name, tarReader, "1")
 
 	}
-}
-
-func BuildDockerImage(imageName string, dockerfileTarReader io.Reader) {
-
-	log.Println("setting.DockerGenUrl:::", setting.DockerGenUrl)
-
-	dockerClient, _ := NewDockerClient(setting.DockerGenUrl, nil)
-
-	buildImageConfig := &BuildImage{
-		Context:        dockerfileTarReader,
-		RepoName:       imageName,
-		SuppressOutput: true,
-	}
-
-	reader, err := dockerClient.BuildImage(buildImageConfig)
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	buf := make([]byte, 4096)
-
-	for {
-
-		n, err := reader.Read(buf)
-		if err != nil && err != io.EOF {
-			panic(err)
-		}
-		if 0 == n {
-			ws_writer <- "bye"
-			break
-		}
-
-		ws_writer <- string(buf[:n])
-	}
-
 }
 
 func ServeWs(ctx *macaron.Context) {

@@ -11,59 +11,18 @@
 
 
 $(function() {
-    var sock;
-    var msg = $("#msg");
-    var log = $("#log");
-    var wsuri = "ws://192.168.19.111:8080/ws";
-
-    function appendLog(msg) {
-        var d = log[0]
-        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
-        msg.appendTo(log)
-        if (doScroll) {
-            d.scrollTop = d.scrollHeight - d.clientHeight;
-        }
-    }
-
-    try {
-        sock = new WebSocket(wsuri);
-    } catch(e) {
-        alert(e.Message);
-    }
-
-    sock.onopen = function() {
-        console.log("connected to " + wsuri);
-    }
-
-    sock.onerror = function(e) {
-        console.log(" error from connect " + e);
-    }
-
-    sock.onclose = function(e) {
-        console.log("connection closed (" + e.code + ")");
-        appendLog($("<div><b>Connection closed.</b></div>"));
-    }
-
-    sock.onmessage = function(e) {
-        console.log("message received: " + e.data);
-        appendLog($("<div/>").text(e.data));
-    }
     
     $("#submit").click(function(){
 
-        if (!sock) {
-            return false;
-        }
-
         imagename=$("#imagename").val();
-        alert(imagename);
+        //alert(imagename);
         if (imagename == ""){
           alert("ImageName can not be null!");
           return false;
         }
 
         dockerfile=$("#dockerfile").val();
-        alert(dockerfile);
+        //alert(dockerfile);
         if (dockerfile == ""){
           alert("DockerFile can not be null!");
           return false;
@@ -77,13 +36,60 @@ $(function() {
         content += base64_str;
         content += '"}';
 
-        alert(content);
+        //alert(content);
 
-        sock.send(content);
-        
+	// add HTTP Request
+	var submitData = {
+		imagename  : imagename,
+		dockerfile : base64_str,
+	};
+	$.post('/buildreq', submitData,
+	  function(data) {
+		//appendLog($("<div/>").text(data));  
+		console.log("from server==========>",data);
+		startShow(data);
+	});
+
         return false;
     });
 }) 
+
+
+function appendLog(msg){
+	var log = $("#log");	
+        var d = log[0]
+        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+	msg.appendTo(log);
+	if (doScroll) {
+            d.scrollTop = d.scrollHeight - d.clientHeight;
+        }
+}
+
+var time = 1000;
+
+
+function getLog(logid){
+	$.post('/show', {logid:logid},function(data) {
+		appendLog($("<div>"+data+"</div>"));  
+		console.log(data);			
+		if (data!="---end---"){
+			console.log(data+"=========================");
+			console.log(data == "---end---");
+			
+			if (data == ""){
+				time = time * 2;
+			}else if (data != "" && time > 1000){
+				time = time / 2;
+			}
+			console.log(time);
+			window.setTimeout(function(){getLog(logid)},time);
+		}		
+	});
+}
+
+function startShow(logid){
+	window.setTimeout(function(){getLog(logid)},100);
+}
 </script> 
   <h1>Build image screen</h1> 
   <div id="log" style="height: 300px;overflow-y: scroll;border: 1px solid #CCC;"></div> 
