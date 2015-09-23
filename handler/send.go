@@ -59,7 +59,7 @@ func SendBuildReq(ctx *macaron.Context) {
 	tag := geneGuid()
 
 	//build docker
-	go BuildDockerImage(ctx.Query("imagename"), tarReader, tag)
+	go BuildDockerImageStartByHTTPReq(ctx.Query("imagename"), tarReader, tag)
 
 	ctx.Write([]byte(tag))
 }
@@ -73,12 +73,13 @@ func geneGuid() string {
 	return utils.MD5(base64.URLEncoding.EncodeToString(b))
 }
 
-func BuildDockerImage(imageName string, dockerfileTarReader io.Reader, tag string) {
+func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Reader, tag string) {
 
 	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer c.Close()
 
 	dockerClient, _ := NewDockerClient(setting.DockerGenUrl, nil)
 

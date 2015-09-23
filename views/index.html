@@ -8,24 +8,54 @@
  </head> 
  <body> 
 <script type = "text/javascript">
-
-
+    var time = 1000;
+    var sock;
+    var wsuri = "ws://192.168.199.10:8080/ws";
 $(function() {
-    
-    $("#submit").click(function(){
 
-        imagename=$("#imagename").val();
-        //alert(imagename);
-        if (imagename == ""){
-          alert("ImageName can not be null!");
-          return false;
+    try {
+        sock = new WebSocket(wsuri);
+    } catch(e) {
+        alert(e.Message);
+    }
+
+    sock.onopen = function() {
+        console.log("connected to " + wsuri);
+    }
+
+    sock.onerror = function(e) {
+        console.log(" error from connect " + e);
+    }
+
+    sock.onclose = function(e) {
+        console.log("connection closed (" + e.code + ")");
+        appendLog($("<div><b>Connection closed.</b></div>"));
+    }
+
+    sock.onmessage = function(e) {
+        console.log("message received: " + e.data);
+        appendLog($("<div/>").text(e.data));
+    }
+
+    $("#submit").click(function() {
+
+        if (!sock) {
+            console.log("don't hava a socket!")
+            //return false;
         }
 
-        dockerfile=$("#dockerfile").val();
+        imagename = $("#imagename").val();
+        //alert(imagename);
+        if (imagename == "") {
+            alert("ImageName can not be null!");
+            return false;
+        }
+
+        dockerfile = $("#dockerfile").val();
         //alert(dockerfile);
-        if (dockerfile == ""){
-          alert("DockerFile can not be null!");
-          return false;
+        if (dockerfile == "") {
+            alert("DockerFile can not be null!");
+            return false;
         }
 
         base64_str = Base64.encode(dockerfile)
@@ -36,60 +66,69 @@ $(function() {
         content += base64_str;
         content += '"}';
 
-        //alert(content);
+        //sock.send(content);
 
-	// add HTTP Request
-	var submitData = {
-		imagename  : imagename,
-		dockerfile : base64_str,
-	};
-	$.post('/buildreq', submitData,
-	  function(data) {
-		//appendLog($("<div/>").text(data));  
-		console.log("from server==========>",data);
-		startShow(data);
-	});
+        // add HTTP Request
+        var submitData = {
+            imagename: imagename,
+            dockerfile: base64_str,
+        };
+        $.post('/buildreq', submitData,
+        function(data) {
+            console.log("from server==========>", data);
+            startShow(data);
+        });
 
         return false;
     });
-}) 
+})
 
+function appendLog(msg) {
+    var log = $("#log");    
+    var d = log[0];
+    var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+    msg.appendTo(log);
+    if (doScroll) {
+        d.scrollTop = d.scrollHeight - d.clientHeight;
+    }
+}
 
-function appendLog(msg){
-	var log = $("#log");	
-        var d = log[0]
-        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
-	msg.appendTo(log);
-	if (doScroll) {
-            d.scrollTop = d.scrollHeight - d.clientHeight;
+function getLog(logid, count) {
+    $.post('/show', {
+        logid: logid,
+	count: count,
+    },
+    function(data) {
+        appendLog($("<div>" + data + "</div>"));
+        console.log(data);
+        if (data.substr(data.length - 3, 3) != "bye") {
+            console.log("=========================>>" + data);
+
+            if (data == "") {
+                time = time * 2;
+            } else if (data != "" && time > 1000) {
+                time = time / 2;
+            }
+
+	    if (data != ""){
+		count ++;
+	    }
+            console.log(time);
+            window.setTimeout(function() {
+                getLog(logid, count)
+            },
+            time);
         }
+    });
 }
 
-var time = 1000;
-
-
-function getLog(logid){
-	$.post('/show', {logid:logid},function(data) {
-		appendLog($("<div>"+data+"</div>"));  
-		console.log(data);			
-		if (data!="---end---"){
-			console.log(data+"=========================");
-			console.log(data == "---end---");
-			
-			if (data == ""){
-				time = time * 2;
-			}else if (data != "" && time > 1000){
-				time = time / 2;
-			}
-			console.log(time);
-			window.setTimeout(function(){getLog(logid)},time);
-		}		
-	});
+function startShow(logid) {
+    window.setTimeout(function() {
+        getLog(logid, 0)
+    },
+    100);
 }
 
-function startShow(logid){
-	window.setTimeout(function(){getLog(logid)},100);
-}
 </script> 
   <h1>Build image screen</h1> 
   <div id="log" style="height: 300px;overflow-y: scroll;border: 1px solid #CCC;"></div> 
@@ -103,3 +142,4 @@ function startShow(logid){
   </div>   
  </body>
 </html>
+

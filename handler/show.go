@@ -11,21 +11,26 @@ import (
 func GetLog(ctx *macaron.Context) {
 
 	logId := ctx.Req.FormValue("logid")
+	count := ctx.QueryInt64("count")
 
 	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer c.Close()
 
-	result := ""
+	var str []uint8
+	strs, err := c.Do("LRANGE", "buildLog:"+logId, count, count+1)
+	if err != nil {
+		log.Println("[error when get log]", err)
+		str = []uint8("error in server")
+	}
 
-	str, err := redis.String(c.Do("LPOP", "buildLog:"+logId))
-	for i := 0; str != "" || i < 1; i++ {
-		result += str
-		str, err = redis.String(c.Do("LPOP", "buildLog:"+logId))
+	if len(strs.([]interface{})) > 0 {
+		str = strs.([]interface{})[0].([]uint8)
+	} else {
+		str = []uint8("")
 	}
-	if result == "bye" {
-		result = "---end---"
-	}
-	ctx.Resp.Write([]byte(result))
+
+	ctx.Resp.Write(str)
 }
