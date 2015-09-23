@@ -106,12 +106,25 @@ func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Rea
 			if err != nil {
 				log.Println("err when write to redis:", err)
 			}
+
+			_, err = c.Do("PUBLISH", "buildLog:"+tag, "bye")
+			if err != nil {
+				log.Println("err when publish build log:", err)
+			}
+
 			break
 		}
+
 		log.Println("=============>", string(buf[:n]))
-		_, err = c.Do("RPUSH", "buildLog:"+tag, string(buf[:n])+"<br/>")
+		_, err = c.Do("RPUSH", "buildLog:"+tag, string(buf[:n]))
 		if err != nil {
 			log.Println("err when write to redis:", err)
 		}
+
+		_, err = c.Do("PUBLISH", "buildLog:"+tag, string(buf[:n]))
+		if err != nil {
+			log.Println("err when write to redis:", err)
+		}
+
 	}
 }

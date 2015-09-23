@@ -76,7 +76,10 @@ $(function() {
         $.post('/buildreq', submitData,
         function(data) {
             console.log("from server==========>", data);
-            startShow(data);
+            appendLog($("<div>you can get build log through websocket" + data + "</div>"));
+	    appendLog($("<div>the url is ws:///ws_getbuildlog</div>"));
+	    appendLog($('<div>send msg <b>{"id":"'+data+'"}</b> to get your log </div>'));
+	    startShow(data);
         });
 
         return false;
