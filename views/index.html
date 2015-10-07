@@ -8,22 +8,10 @@
  </head> 
  <body> 
 <script type = "text/javascript">
-
-
-$(function() {
+    var time = 1000;
     var sock;
-    var msg = $("#msg");
-    var log = $("#log");
-    var wsuri = "ws://192.168.19.111:8080/ws";
-
-    function appendLog(msg) {
-        var d = log[0]
-        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
-        msg.appendTo(log)
-        if (doScroll) {
-            d.scrollTop = d.scrollHeight - d.clientHeight;
-        }
-    }
+    var wsuri = "ws://192.168.199.10:8080/ws";
+$(function() {
 
     try {
         sock = new WebSocket(wsuri);
@@ -48,25 +36,26 @@ $(function() {
         console.log("message received: " + e.data);
         appendLog($("<div/>").text(e.data));
     }
-    
-    $("#submit").click(function(){
+
+    $("#submit").click(function() {
 
         if (!sock) {
+            console.log("don't hava a socket!")
+            //return false;
+        }
+
+        imagename = $("#imagename").val();
+        //alert(imagename);
+        if (imagename == "") {
+            alert("ImageName can not be null!");
             return false;
         }
 
-        imagename=$("#imagename").val();
-        alert(imagename);
-        if (imagename == ""){
-          alert("ImageName can not be null!");
-          return false;
-        }
-
-        dockerfile=$("#dockerfile").val();
-        alert(dockerfile);
-        if (dockerfile == ""){
-          alert("DockerFile can not be null!");
-          return false;
+        dockerfile = $("#dockerfile").val();
+        //alert(dockerfile);
+        if (dockerfile == "") {
+            alert("DockerFile can not be null!");
+            return false;
         }
 
         base64_str = Base64.encode(dockerfile)
@@ -77,13 +66,72 @@ $(function() {
         content += base64_str;
         content += '"}';
 
-        alert(content);
+        //sock.send(content);
 
-        sock.send(content);
-        
+        // add HTTP Request
+        var submitData = {
+            imagename: imagename,
+            dockerfile: base64_str,
+        };
+        $.post('/buildreq', submitData,
+        function(data) {
+            console.log("from server==========>", data);
+            appendLog($("<div>you can get build log through websocket" + data + "</div>"));
+	    appendLog($("<div>the url is ws:///ws_getbuildlog</div>"));
+	    appendLog($('<div>send msg <b>{"id":"'+data+'"}</b> to get your log </div>'));
+	    startShow(data);
+        });
+
         return false;
     });
-}) 
+})
+
+function appendLog(msg) {
+    var log = $("#log");    
+    var d = log[0];
+    var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+    msg.appendTo(log);
+    if (doScroll) {
+        d.scrollTop = d.scrollHeight - d.clientHeight;
+    }
+}
+
+function getLog(logid, count) {
+    $.post('/show', {
+        logid: logid,
+	count: count,
+    },
+    function(data) {
+        appendLog($("<div>" + data + "</div>"));
+        console.log(data);
+        if (data.substr(data.length - 3, 3) != "bye") {
+            console.log("=========================>>" + data);
+
+            if (data == "") {
+                time = time * 2;
+            } else if (data != "" && time > 1000) {
+                time = time / 2;
+            }
+
+	    if (data != ""){
+		count ++;
+	    }
+            console.log(time);
+            window.setTimeout(function() {
+                getLog(logid, count)
+            },
+            time);
+        }
+    });
+}
+
+function startShow(logid) {
+    window.setTimeout(function() {
+        getLog(logid, 0)
+    },
+    100);
+}
+
 </script> 
   <h1>Build image screen</h1> 
   <div id="log" style="height: 300px;overflow-y: scroll;border: 1px solid #CCC;"></div> 
@@ -97,3 +145,4 @@ $(function() {
   </div>   
  </body>
 </html>
+

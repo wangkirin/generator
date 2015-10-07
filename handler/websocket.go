@@ -110,12 +110,12 @@ func ReceiveMsg(ws *websocket.Conn) {
 		}
 		tarReader := bytes.NewReader(buf.Bytes())
 		//build docker
-		BuildDockerImage(buildImageInfo.Name, tarReader)
+		BuildDockerImageStartBySocketReq(buildImageInfo.Name, tarReader)
 
 	}
 }
 
-func BuildDockerImage(imageName string, dockerfileTarReader io.Reader) {
+func BuildDockerImageStartBySocketReq(imageName string, dockerfileTarReader io.Reader) {
 
 	log.Println("setting.DockerGenUrl:::", setting.DockerGenUrl)
 
