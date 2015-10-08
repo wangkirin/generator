@@ -10,7 +10,7 @@
 <script type = "text/javascript">
     var time = 1000;
     var sock;
-    var wsuri = "ws://192.168.199.10:8080/ws";
+    var wsuri = "ws://192.168.19.111:8080/ws";
 $(function() {
 
     try {
@@ -41,18 +41,15 @@ $(function() {
 
         if (!sock) {
             console.log("don't hava a socket!")
-            //return false;
         }
 
         imagename = $("#imagename").val();
-        //alert(imagename);
         if (imagename == "") {
             alert("ImageName can not be null!");
             return false;
         }
 
         dockerfile = $("#dockerfile").val();
-        //alert(dockerfile);
         if (dockerfile == "") {
             alert("DockerFile can not be null!");
             return false;
@@ -66,18 +63,17 @@ $(function() {
         content += base64_str;
         content += '"}';
 
-        //sock.send(content);
 
         // add HTTP Request
         var submitData = {
             imagename: imagename,
             dockerfile: base64_str,
         };
-        $.post('/buildreq', submitData,
+        $.post('/httpbuild', submitData,
         function(data) {
             console.log("from server==========>", data);
-            appendLog($("<div>you can get build log through websocket" + data + "</div>"));
-	    appendLog($("<div>the url is ws:///ws_getbuildlog</div>"));
+            appendLog($("<div>you can get build log through websocket:" + data + "</div>"));
+	    appendLog($("<div>the url is ws:///wsbuildlog</div>"));
 	    appendLog($('<div>send msg <b>{"id":"'+data+'"}</b> to get your log </div>'));
 	    startShow(data);
         });
@@ -97,7 +93,7 @@ function appendLog(msg) {
 }
 
 function getLog(logid, count) {
-    $.post('/show', {
+    $.post('/httpbuildlog', {
         logid: logid,
 	count: count,
     },

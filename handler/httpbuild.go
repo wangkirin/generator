@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"io"
 	"log"
+	"strings"
 
 	"github.com/Unknwon/macaron"
 	. "github.com/containerops/generator/modules"
@@ -15,9 +16,8 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-func SendBuildReq(ctx *macaron.Context) {
+func HTTPBuild(ctx *macaron.Context) {
 
-	//dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Query("dockerfile"))
 	dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Req.FormValue("dockerfile"))
 
 	log.Println("from broswer============================>\n", ctx.Req.FormValue("dockerfile"))
@@ -109,6 +109,12 @@ func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Rea
 		if err != nil && err != io.EOF {
 			panic(err)
 		}
+
+		if strings.Contains(string(buf[:n]), `"stream":"Successfully built`) {
+			log.Println("=============>", "start push image")
+			dockerClient.PushImage(buildImageConfig)
+		}
+
 		if 0 == n {
 			_, err = c.Do("RPUSH", "buildLog:"+tag, "bye")
 			if err != nil {

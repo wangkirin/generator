@@ -193,3 +193,11 @@ func (client *DockerClient) BuildImage(image *BuildImage) (io.ReadCloser, error)
 	uri := fmt.Sprintf("/%s/build?%s", APIVersion, v.Encode())
 	return client.doStreamRequest("POST", uri, image.Context, headers)
 }
+
+func (client *DockerClient) PushImage(image *BuildImage) (io.ReadCloser, error) {
+
+	headers := make(map[string]string)
+	headers["X-Registry-Auth"] = "Og=="
+	uri := fmt.Sprintf("/images/%s/push", image.RepoName)
+	return client.doStreamRequest("POST", uri, image.Context, headers)
+}

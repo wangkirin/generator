@@ -8,7 +8,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-func GetLog(ctx *macaron.Context) {
+func HTTPBuildLog(ctx *macaron.Context) {
 
 	logId := ctx.Req.FormValue("logid")
 	count := ctx.QueryInt64("count")

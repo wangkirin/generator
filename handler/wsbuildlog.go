@@ -15,7 +15,7 @@ type ReqInfo struct {
 	Id string `json:"Id"`
 }
 
-func WSGetLog(ctx *macaron.Context) {
+func WSbuildLog(ctx *macaron.Context) {
 
 	req := ctx.Req.Request
 	resp := ctx.Resp
