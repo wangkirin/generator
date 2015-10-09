@@ -71,11 +71,10 @@ $(function() {
         };
         $.post('/httpbuild', submitData,
         function(data) {
-            console.log("from server==========>", data);
             appendLog($("<div>you can get build log through websocket:" + data + "</div>"));
-	    appendLog($("<div>the url is ws:///wsbuildlog</div>"));
-	    appendLog($('<div>send msg <b>{"id":"'+data+'"}</b> to get your log </div>'));
-	    startShow(data);
+    	    appendLog($("<div>the url is ws:///wsbuildlog</div>"));
+    	    appendLog($('<div>send msg <b>{"id":"'+data+'"}</b> to get your log </div>'));
+    	    startShow(data);
         });
 
         return false;
@@ -99,20 +98,16 @@ function getLog(logid, count) {
     },
     function(data) {
         appendLog($("<div>" + data + "</div>"));
-        console.log(data);
         if (data.substr(data.length - 3, 3) != "bye") {
-            console.log("=========================>>" + data);
-
             if (data == "") {
                 time = time * 2;
             } else if (data != "" && time > 1000) {
                 time = time / 2;
             }
 
-	    if (data != ""){
-		count ++;
-	    }
-            console.log(time);
+    	    if (data != ""){
+        		count ++;
+    	    }
             window.setTimeout(function() {
                 getLog(logid, count)
             },

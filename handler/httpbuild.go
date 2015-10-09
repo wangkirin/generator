@@ -10,17 +10,15 @@ import (
 	"strings"
 
 	"github.com/Unknwon/macaron"
+	"github.com/containerops/generator/models"
 	. "github.com/containerops/generator/modules"
-	"github.com/containerops/generator/setting"
 	"github.com/containerops/wrench/utils"
-	"github.com/garyburd/redigo/redis"
 )
 
 func HTTPBuild(ctx *macaron.Context) {
 
 	dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Req.FormValue("dockerfile"))
 
-	log.Println("from broswer============================>\n", ctx.Req.FormValue("dockerfile"))
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 	}
@@ -75,19 +73,11 @@ func geneGuid() string {
 
 func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Reader, tag string) {
 
-	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer c.Close()
-
-	dockerUrl, err := redis.String(c.Do("SRANDMEMBER", "DockerList"))
+	dockerUrl, err := models.GetRandomOneFromSet("DockerList")
 	if err != nil {
 		log.Fatalln("err when get docker list", err)
 		return
 	}
-
-	log.Println("=======================>\nselect docker ", dockerUrl, "to build ......")
 
 	dockerClient, _ := NewDockerClient(dockerUrl, nil)
 
@@ -111,17 +101,16 @@ func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Rea
 		}
 
 		if strings.Contains(string(buf[:n]), `"stream":"Successfully built`) {
-			log.Println("=============>", "start push image")
 			dockerClient.PushImage(buildImageConfig)
 		}
 
 		if 0 == n {
-			_, err = c.Do("RPUSH", "buildLog:"+tag, "bye")
+			err = models.PushMsgToList("buildLog:"+tag, "bye")
 			if err != nil {
 				log.Println("err when write to redis:", err)
 			}
 
-			_, err = c.Do("PUBLISH", "buildLog:"+tag, "bye")
+			err = models.PublishMsg("buildLog:"+tag, "bye")
 			if err != nil {
 				log.Println("err when publish build log:", err)
 			}
@@ -129,13 +118,12 @@ func BuildDockerImageStartByHTTPReq(imageName string, dockerfileTarReader io.Rea
 			break
 		}
 
-		log.Println("=============>", string(buf[:n]))
-		_, err = c.Do("RPUSH", "buildLog:"+tag, string(buf[:n]))
+		err = models.PushMsgToList("buildLog:"+tag, string(buf[:n]))
 		if err != nil {
 			log.Println("err when write to redis:", err)
 		}
 
-		_, err = c.Do("PUBLISH", "buildLog:"+tag, string(buf[:n]))
+		err = models.PublishMsg("buildLog:"+tag, string(buf[:n]))
 		if err != nil {
 			log.Println("err when write to redis:", err)
 		}
