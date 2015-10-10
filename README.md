@@ -55,6 +55,11 @@ EXPOSE 22
 	Return : {"status":"Downloading",.......}
 ```
 
+## HTTP Test URL 
+```
+	URL : http://192.168.199.10:8080//html/index.html
+```
+
 ## Send Build Dockerfile
 
 ```
