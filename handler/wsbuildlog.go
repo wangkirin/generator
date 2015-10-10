@@ -91,8 +91,8 @@ func getAllOldLogById(id string, WSWriter chan []uint8) {
 		log.Println("[error when get history log]", err)
 	}
 
-	for _, str := range strs.([]interface{}) {
-		WSWriter <- str.([]uint8)
+	for _, str := range strs {
+		WSWriter <- []uint8(str)
 	}
 }
 

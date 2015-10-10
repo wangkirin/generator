@@ -19,8 +19,8 @@ func HTTPBuildLog(ctx *macaron.Context) {
 		str = []uint8("error in server")
 	}
 
-	if len(strs.([]interface{})) > 0 {
-		str = strs.([]interface{})[0].([]uint8)
+	if len(strs) > 0 {
+		str = []uint8(strs[0])
 	} else {
 		str = []uint8("")
 	}
