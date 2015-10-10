@@ -40,7 +40,6 @@ EXPOSE 22
 ```
 	Method : GET
 	URL : ws://192.168.199.10:8080/wsbuildlog
-	
 	send json info
 	{"id":"a95d9886304920ad3437aeb2c7cea2a3"}
 
@@ -60,12 +59,8 @@ EXPOSE 22
 
 ```
 	Method : POST
-	
 	URL : http://192.168.199.10:8080/httpbuild
-	
 	Param : imagename=containerops.me:5000/fsk/hw2ubuntu:15.04&dockerfile=(BASE64DockerFile)
-
-
 	Return{LogID} : 9a1df7f8833cbb706f45a00882e200f7
 ```
 
