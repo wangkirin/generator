@@ -13,5 +13,5 @@ func SetGeneratorMacaron(m *macaron.Macaron) {
 	//Setting Router
 	router.SetRouters(m)
 
-	m.Use(macaron.Static("static"))
+	m.Use(macaron.Static("tests"))
 }

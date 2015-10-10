@@ -4,10 +4,9 @@ import (
 	"fmt"
 
 	"github.com/Unknwon/macaron"
-
 	"github.com/astaxie/beego/logs"
 
-	"github.com/containerops/generator/setting"
+	"github.com/containerops/wrench/setting"
 )
 
 var Log *logs.BeeLogger

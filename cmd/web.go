@@ -11,8 +11,8 @@ import (
 
 	"github.com/Unknwon/macaron"
 
-	"github.com/containerops/generator/setting"
 	"github.com/containerops/generator/web"
+	"github.com/containerops/wrench/setting"
 	"github.com/containerops/wrench/utils"
 )
 
