@@ -14,8 +14,8 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+/*
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	if err := setting.SetConfig("conf/containerops.conf"); err != nil {
 		fmt.Printf("Read config error: %v", err.Error())
@@ -30,7 +30,9 @@ func init() {
 	}
 
 }
+*/
 
+//move to modules
 func readConfigFile(path string) string {
 	file, err := os.Open(path)
 	if err != nil {
@@ -44,16 +46,19 @@ func readConfigFile(path string) string {
 	return string(result)
 }
 
+//move to modules
 type BuilderList struct {
 	Dockers []BuilderInfo `json:"docker"`
 	Rkt     []BuilderInfo `json:"rkt"`
 }
 
+//move to modules
 type BuilderInfo struct {
 	IP   string `json:"url"`
 	PORT string `json:"port"`
 }
 
+//move to modules
 func saveToRedis(list BuilderList) {
 	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
 	if err != nil {
@@ -78,6 +83,20 @@ func saveToRedis(list BuilderList) {
 }
 
 func main() {
+
+	if err := setting.SetConfig("conf/containerops.conf"); err != nil {
+		fmt.Printf("Read config error: %v", err.Error())
+	}
+
+	//to one func
+	result := readConfigFile("./conf/pool.json")
+	var list BuilderList
+	if err := json.Unmarshal([]byte(result), &list); err != nil {
+		log.Fatalln(err)
+	} else {
+		saveToRedis(list)
+	}
+
 	app := cli.NewApp()
 
 	app.Name = setting.AppName
