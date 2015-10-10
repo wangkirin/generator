@@ -4,8 +4,7 @@ import (
 	"log"
 
 	"github.com/Unknwon/macaron"
-	"github.com/containerops/generator/setting"
-	"github.com/garyburd/redigo/redis"
+	"github.com/containerops/generator/models"
 )
 
 func HTTPBuildLog(ctx *macaron.Context) {
@@ -13,14 +12,8 @@ func HTTPBuildLog(ctx *macaron.Context) {
 	logId := ctx.Req.FormValue("logid")
 	count := ctx.QueryInt64("count")
 
-	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer c.Close()
-
 	var str []uint8
-	strs, err := c.Do("LRANGE", "buildLog:"+logId, count, count+1)
+	strs, err := models.GetMsgFromList("buildLog:"+logId, count, count+1)
 	if err != nil {
 		log.Println("[error when get log]", err)
 		str = []uint8("error in server")

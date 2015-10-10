@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/Unknwon/macaron"
-	"github.com/containerops/generator/setting"
-	"github.com/garyburd/redigo/redis"
+
+	"github.com/containerops/generator/models"
 	"github.com/gorilla/websocket"
 )
 
@@ -86,13 +86,7 @@ func PushMsg(ws *websocket.Conn, WSWriter chan []uint8) {
 }
 
 func getAllOldLogById(id string, WSWriter chan []uint8) {
-	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer c.Close()
-
-	strs, err := c.Do("LRANGE", "buildLog:"+id, 0, -1)
+	strs, err := models.GetMsgFromList("buildLog:"+id, int64(0), int64(-1))
 	if err != nil {
 		log.Println("[error when get history log]", err)
 	}
@@ -103,47 +97,12 @@ func getAllOldLogById(id string, WSWriter chan []uint8) {
 }
 
 func startSubscribe(id string, WSWriter chan []uint8) {
-	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer c.Close()
-
-	psc := redis.PubSubConn{c}
-	psc.Subscribe("buildLog:" + id)
-	var isEnd = false
+	msgChan := models.SubscribeChannel("buildLog:" + id)
 	for {
-		switch v := psc.Receive().(type) {
-		case redis.Message:
-			WSWriter <- v.Data
-			if testSliceEq(v.Data, []byte("bye")) {
-				isEnd = true
-			}
-		}
-		if isEnd {
+		msg := <-msgChan
+		WSWriter <- []uint8(msg)
+		if "bye" == msg {
 			break
 		}
 	}
-}
-
-func testSliceEq(a, b []uint8) bool {
-	if a == nil && b == nil {
-		return true
-	}
-
-	if a == nil || b == nil {
-		return false
-	}
-
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
 }
