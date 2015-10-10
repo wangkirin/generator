@@ -41,7 +41,6 @@ func readConfigFile(path string) string {
 
 type BuilderList struct {
 	Dockers []BuilderInfo `json:"docker"`
-	Rkt     []BuilderInfo `json:"rkt"`
 }
 
 type BuilderInfo struct {
@@ -57,11 +56,4 @@ func saveToRedis(list BuilderList) {
 		}
 	}
 
-	for _, v := range list.Rkt {
-		err := models.SaveMsgToSet("RKTList", v.IP+":"+v.PORT)
-		if err != nil {
-			log.Println("err when save docker build list", err)
-		}
-
-	}
 }
