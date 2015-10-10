@@ -43,7 +43,7 @@ func receiveMsgFromChannel(channelName string, msgChan chan string) {
 			log.Fatal(err)
 		}
 
-		msgChan <- msg.String()
+		msgChan <- msg.Payload
 		if msg.String() == "bye" {
 			isEnd = true
 		}
