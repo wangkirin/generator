@@ -15,7 +15,7 @@ import (
 	"github.com/containerops/wrench/utils"
 )
 
-func HTTPBuild(ctx *macaron.Context) {
+func HTTPBuild(ctx *macaron.Context) string {
 
 	dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Req.FormValue("dockerfile"))
 
@@ -59,7 +59,8 @@ func HTTPBuild(ctx *macaron.Context) {
 	//build docker
 	go BuildDockerImageStartByHTTPReq(ctx.Query("imagename"), tarReader, tag)
 
-	ctx.Write([]byte(tag))
+	//ctx.Write([]byte(tag))
+	return tag
 }
 
 func geneGuid() string {

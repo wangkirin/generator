@@ -3,7 +3,7 @@ package models
 import (
 	"log"
 
-	"github.com/containerops/generator/setting"
+	"github.com/containerops/wrench/setting"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -25,6 +25,17 @@ func GetMsgFromList(listName string, start, end int64) (interface{}, error) {
 	defer c.Close()
 
 	return c.Do("LRANGE", listName, start, end)
+}
+
+func SaveMsgToSet(setName, msg string) error {
+	c, err := redis.Dial("tcp", setting.DBURI, redis.DialPassword(setting.DBPasswd), redis.DialDatabase(int(setting.DBDB)))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer c.Close()
+
+	_, err = c.Do("SADD", setName, msg)
+	return err
 }
 
 func PushMsgToList(listName, msg string) error {
