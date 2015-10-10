@@ -18,7 +18,7 @@ RUN wget https://get.docker.com/builds/Darwin/x86_64/docker-latest
 EXPOSE 22
 ```
 
-## pool json
+## conf/pool.json
 
 ```
 {
