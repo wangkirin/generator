@@ -12,7 +12,4 @@ func SetRouters(m *macaron.Macaron) {
 			m.Get("/log/:protocol/:id", handler.Log)
 		})
 	})
-	//m.Get("/wsbuildlog", handler.WSbuildLog)
-	//m.Post("/httpbuildlog", handler.HTTPBuildLog)
-	//m.Post("/httpbuild", handler.HTTPBuild)
 }

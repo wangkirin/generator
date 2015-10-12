@@ -1,7 +1,6 @@
 package handler
 
 import (
-	//"encoding/json"
 	"log"
 	"net/http"
 
@@ -47,23 +46,6 @@ func PushLog(ws *websocket.Conn, id string) {
 
 	defer ws.Close()
 
-	//for {
-	//	_, message, err := ws.ReadMessage()
-
-	//	if err != nil {
-	//		log.Println("Can't receive %s", err.Error())
-	//		break
-	//	}
-
-	//	if string(message) == "" {
-	//		log.Println("Receive message is null")
-	//		break
-	//	}
-
-	//	var info ReqInfo
-	//	if err := json.Unmarshal(, &info); err != nil {
-	//		log.Println(err.Error())
-	//	} else {
 	var WSWriter = make(chan []uint8, 1024)
 	// push data in channel to socket
 	go PushMsg(ws, WSWriter)
@@ -71,8 +53,7 @@ func PushLog(ws *websocket.Conn, id string) {
 	getAllOldLogById(id, WSWriter)
 	// get new build log and push to channel
 	go startSubscribe(id, WSWriter)
-	//	}
-	//}
+
 	<-endChan
 }
 
