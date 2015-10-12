@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"log"
 	"net/http"
 
@@ -15,7 +15,17 @@ type ReqInfo struct {
 	Id string `json:"Id"`
 }
 
-func WSbuildLog(ctx *macaron.Context) {
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+var endChan = make(chan bool, 1)
+
+func websocketBuildLog(ctx *macaron.Context) {
 
 	req := ctx.Req.Request
 	resp := ctx.Resp
@@ -30,39 +40,40 @@ func WSbuildLog(ctx *macaron.Context) {
 		return
 	}
 
-	ReceiveId(ws)
+	PushLog(ws, ctx.Params(":id"))
 }
 
-func ReceiveId(ws *websocket.Conn) {
+func PushLog(ws *websocket.Conn, id string) {
 
 	defer ws.Close()
 
-	for {
-		_, message, err := ws.ReadMessage()
+	//for {
+	//	_, message, err := ws.ReadMessage()
 
-		if err != nil {
-			log.Println("Can't receive %s", err.Error())
-			break
-		}
+	//	if err != nil {
+	//		log.Println("Can't receive %s", err.Error())
+	//		break
+	//	}
 
-		if string(message) == "" {
-			log.Println("Receive message is null")
-			break
-		}
+	//	if string(message) == "" {
+	//		log.Println("Receive message is null")
+	//		break
+	//	}
 
-		var info ReqInfo
-		if err := json.Unmarshal(message, &info); err != nil {
-			log.Println(err.Error())
-		} else {
-			var WSWriter = make(chan []uint8, 1024)
-			// push data in channel to socket
-			go PushMsg(ws, WSWriter)
-			// get build log history and push to channel
-			getAllOldLogById(info.Id, WSWriter)
-			// get new build log and push to channel
-			go startSubscribe(info.Id, WSWriter)
-		}
-	}
+	//	var info ReqInfo
+	//	if err := json.Unmarshal(, &info); err != nil {
+	//		log.Println(err.Error())
+	//	} else {
+	var WSWriter = make(chan []uint8, 1024)
+	// push data in channel to socket
+	go PushMsg(ws, WSWriter)
+	// get build log history and push to channel
+	getAllOldLogById(id, WSWriter)
+	// get new build log and push to channel
+	go startSubscribe(id, WSWriter)
+	//	}
+	//}
+	<-endChan
 }
 
 func PushMsg(ws *websocket.Conn, WSWriter chan []uint8) {
@@ -81,7 +92,13 @@ func PushMsg(ws *websocket.Conn, WSWriter chan []uint8) {
 			log.Println("Can't send", err.Error())
 			break
 		}
+
+		if string(msg) == "bye" {
+			break
+		}
 	}
+
+	endChan <- true
 
 }
 
@@ -105,4 +122,5 @@ func startSubscribe(id string, WSWriter chan []uint8) {
 			break
 		}
 	}
+
 }
