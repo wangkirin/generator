@@ -15,7 +15,7 @@ import (
 	"github.com/containerops/wrench/utils"
 )
 
-func HTTPBuild(ctx *macaron.Context) string {
+func Build(ctx *macaron.Context) string {
 
 	dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Req.FormValue("dockerfile"))
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/containerops/generator/middleware"
 	"github.com/containerops/generator/router"
+	"github.com/containerops/wrench/setting"
 )
 
 func SetGeneratorMacaron(m *macaron.Macaron) {
@@ -12,6 +13,7 @@ func SetGeneratorMacaron(m *macaron.Macaron) {
 	middleware.SetMiddlewares(m)
 	//Setting Router
 	router.SetRouters(m)
-
-	m.Use(macaron.Static("tests"))
+	if setting.RunMode == "dev" {
+		m.Use(macaron.Static("tests"))
+	}
 }

@@ -17,8 +17,8 @@ func main() {
 		fmt.Printf("Read config error: %v", err.Error())
 	}
 
-	if err := modules.LoadBuildList("./conf/pool.json"); err != nil {
-		log.Fatal(err)
+	if err := modules.LoadBuildList("/conf/pool.json"); err != nil {
+		log.Fatal("load config file /conf/pool.json error")
 	}
 
 	app := cli.NewApp()
