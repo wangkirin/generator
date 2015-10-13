@@ -7,9 +7,9 @@ import (
 	"github.com/containerops/generator/models"
 )
 
-func HTTPBuildLog(ctx *macaron.Context) {
+func httpBuildLog(ctx *macaron.Context) {
 
-	logId := ctx.Req.FormValue("logid")
+	logId := ctx.Params("id")
 	count := ctx.QueryInt64("count")
 
 	var str []uint8

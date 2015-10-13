@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/containerops/generator/models"
 	"github.com/containerops/wrench/db"
@@ -16,7 +19,12 @@ func LoadBuildList(path string) error {
 	if er != nil {
 		log.Println(er)
 	}
-	result := readConfigFile(path)
+
+	// get current file path
+	file, _ := exec.LookPath(os.Args[0])
+	cPath, _ := filepath.Abs(file)
+	result := readConfigFile(cPath[0:strings.LastIndex(cPath, "/")] + path)
+
 	var list BuilderList
 	if err := json.Unmarshal([]byte(result), &list); err != nil {
 		return err
