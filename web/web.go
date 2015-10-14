@@ -13,7 +13,8 @@ func SetGeneratorMacaron(m *macaron.Macaron) {
 	middleware.SetMiddlewares(m)
 	//Setting Router
 	router.SetRouters(m)
+	//static
 	if setting.RunMode == "dev" {
-		m.Use(macaron.Static("tests"))
+		m.Use(macaron.Static("external"))
 	}
 }

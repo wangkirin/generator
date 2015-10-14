@@ -1,7 +1,7 @@
 # Generator
 ===========
 
-##send Dockerfile
+##Send Dockerfile To Generator Service
 
 ```
 FROM       ubuntu
@@ -38,35 +38,31 @@ EXPOSE 22
 ## WebSocket Get Build log URL 
 
 ```
-	Method : GET
-	URL : ws://192.168.199.10:8080/wsbuildlog
-	send json info
-	{"id":"a95d9886304920ad3437aeb2c7cea2a3"}
+Method : GET
+URL : ws://containerops.me/ws
 
+{"id":"a95d9886304920ad3437aeb2c7cea2a3"}
 ```
+
 ## HTTP Get Build log URL 
+
 ```
-	Method : POST
-
-	URL : http://192.168.199.10:8080/httpbuildlog
-	
-	Param : logid=cd48ff1786c2dd8d86172662b07a8103&count=1
-
-	Return : {"status":"Downloading",.......}
+Method : POST
+URL : https://containerops.me/v1/build/log/cd48ff1786c2dd8d86172662b07a8103
 ```
 
 ## HTTP Test URL 
 ```
-	URL : http://192.168.199.10:8080//html/index.html
+URL : https://containerops.me/html/index.html
 ```
 
 ## Send Build Dockerfile
 
 ```
-	Method : POST
-	URL : http://192.168.199.10:8080/httpbuild
-	Param : imagename=containerops.me:5000/fsk/hw2ubuntu:15.04&dockerfile=(BASE64DockerFile)
-	Return{LogID} : 9a1df7f8833cbb706f45a00882e200f7
+Method : POST
+URL : http://192.168.199.10:8080/v1/build
+Param : imagename=containerops.me:5000/fsk/hw2ubuntu:15.04&dockerfile=(BASE64DockerFile)
+Return{LogID} : 9a1df7f8833cbb706f45a00882e200f7
 ```
 
 ## runtime.conf
@@ -86,6 +82,6 @@ passwd = containerops
 db = 8
 
 [generator]
-genurl = 192.168.19.112:9999
+genurl = containerops.me
 dockerfilepath  = /tmp
 ```
