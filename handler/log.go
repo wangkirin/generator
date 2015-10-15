@@ -2,8 +2,10 @@ package handler
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/Unknwon/macaron"
+	"github.com/gorilla/websocket"
 
 	"github.com/containerops/generator/models"
 )
