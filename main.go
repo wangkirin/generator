@@ -7,7 +7,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/containerops/generator/cmd"
-	"github.com/containerops/generator/modules"
+	"github.com/containerops/generator/modules/build"
 	"github.com/containerops/wrench/setting"
 )
 
