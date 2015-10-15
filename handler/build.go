@@ -12,7 +12,7 @@ import (
 	"github.com/Unknwon/macaron"
 
 	"github.com/containerops/generator/models"
-	. "github.com/containerops/generator/modules"
+	. "github.com/containerops/generator/modules/build"
 	"github.com/containerops/wrench/utils"
 )
 
