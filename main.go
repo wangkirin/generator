@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -14,11 +13,11 @@ import (
 func main() {
 
 	if err := setting.SetConfig("conf/containerops.conf"); err != nil {
-		fmt.Printf("Read config error: %v", err.Error())
+		fmt.Printf("Read config error: %s", err.Error())
 	}
 
 	if err := modules.LoadBuildList("/conf/pool.json"); err != nil {
-		log.Fatal("load config file /conf/pool.json error")
+		fmt.Printf("Read build pool config file /conf/pool.json error: %s", err.Error())
 	}
 
 	app := cli.NewApp()
