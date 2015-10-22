@@ -29,59 +29,13 @@ var unhandleJobList chan *Job
 
 func Build(ctx *macaron.Context) string {
 
-	// log.Println("start build")
 	log.Println("add to job list")
 
-	// dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Req.FormValue("dockerfile"))
-
-	// log.Println(dockerfileBytes)
-
-	// if err != nil {
-	// 	log.Println("[ErrorInfo]", err.Error())
-	// }
-	// // Create a buffer to write our archive to.
-	// buf := new(bytes.Buffer)
-
-	// // Create a new tar archive.
-	// tw := tar.NewWriter(buf)
-
-	// // Add some files to the archive.
-	// var files = []struct {
-	// 	Name, Body string
-	// }{
-	// 	{"Dockerfile", string(dockerfileBytes)},
-	// }
-	// for _, file := range files {
-	// 	hdr := &tar.Header{
-	// 		Name: file.Name,
-	// 		Mode: 0600,
-	// 		Size: int64(len(file.Body)),
-	// 	}
-	// 	if err := tw.WriteHeader(hdr); err != nil {
-	// 		log.Fatalln(err)
-	// 	}
-	// 	if _, err := tw.Write([]byte(file.Body)); err != nil {
-	// 		log.Fatalln(err)
-	// 	}
-	// }
-	// // Make sure to check the error on Close.
-	// if err := tw.Close(); err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// tarReader := bytes.NewReader(buf.Bytes())
-
-	// //geneGuid for buildlog
-	// tag := geneGuid()
-
-	// log.Println(ctx.Query("imagename"))
-	// //build docker
-	// go BuildDockerImageStartByHTTPReq(ctx.Query("imagename"), tarReader, tag)
 	job := new(Job)
 	job.Name = ctx.Query("imagename")
 	job.DockerFile = ctx.Query("dockerfile")
 	job.Tag = geneGuid()
 	addJob(job)
-	//ctx.Write([]byte(tag))
 	return job.Tag
 }
 
