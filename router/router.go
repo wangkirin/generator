@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/Unknwon/macaron"
 	"github.com/containerops/generator/handler"
+	"gopkg.in/macaron.v1"
 )
 
 func SetRouters(m *macaron.Macaron) {
