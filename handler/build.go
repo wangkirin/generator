@@ -18,7 +18,11 @@ import (
 
 func Build(ctx *macaron.Context) string {
 
+	log.Println("start build")
+
 	dockerfileBytes, err := base64.StdEncoding.DecodeString(ctx.Req.FormValue("dockerfile"))
+
+	log.Println(dockerfileBytes)
 
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
@@ -57,6 +61,7 @@ func Build(ctx *macaron.Context) string {
 	//geneGuid for buildlog
 	tag := geneGuid()
 
+	log.Println(ctx.Query("imagename"))
 	//build docker
 	go BuildDockerImageStartByHTTPReq(ctx.Query("imagename"), tarReader, tag)
 

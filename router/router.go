@@ -6,7 +6,7 @@ import (
 )
 
 func SetRouters(m *macaron.Macaron) {
-	m.Group("/v1", func() {
+	m.Group("/b1", func() {
 		m.Group("/build", func() {
 			m.Get("/", handler.Build)
 			m.Get("/log/:protocol/:id", handler.Log)
