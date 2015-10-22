@@ -3,7 +3,8 @@
  <head>
   <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org" />
   <script src="http://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
-  <script src="https://containerops.me/js/base64.js" type="text/javascript"></script>
+  <script src="http://192.168.199.10:8080/js/base64.js" type="text/javascript"></script>
+  <!--<script src="https://containerops.me/js/base64.js" type="text/javascript"></script>-->
 <title>websokcet test</title>
  </head>
  <body>
@@ -69,7 +70,7 @@ $(function() {
             imagename: imagename,
             dockerfile: base64_str,
         };
-        $.get('/v1/build/', submitData,
+        $.get('/b1/build/', submitData,
         function(data) {
             appendLog($("<div>you can get build log through websocket:" + data + "</div>"));
     	    appendLog($("<div>the url is ws:///wsbuildlog</div>"));
@@ -92,7 +93,7 @@ function appendLog(msg) {
 }
 
 function getLog(logid, count) {
-    $.get('/v1/build/log/http/'+logid, {
+    $.get('/b1/build/log/http/'+logid, {
 	count: count,
     },
     function(data) {

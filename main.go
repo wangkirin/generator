@@ -6,6 +6,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/containerops/generator/cmd"
+	"github.com/containerops/generator/handler"
 	"github.com/containerops/generator/modules/build"
 	"github.com/containerops/wrench/setting"
 )
@@ -20,6 +21,7 @@ func main() {
 		fmt.Printf("Read build pool config file /conf/pool.json error: %s", err.Error())
 	}
 
+	handler.InitHandlerList()
 	app := cli.NewApp()
 
 	app.Name = setting.AppName

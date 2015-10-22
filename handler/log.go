@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/macaron.v1"
@@ -27,7 +28,7 @@ func httpBuildLog(ctx *macaron.Context) {
 	var str []uint8
 	strs, err := models.GetMsgFromList("buildLog:"+logId, count, count+1)
 	if err != nil {
-		log.Println("[error when get log]", err)
+		log.Println("[ErrorInfo]", err.Error())
 		str = []uint8("error in server")
 	}
 
@@ -77,6 +78,35 @@ func PushLog(ws *websocket.Conn, id string) {
 	defer ws.Close()
 
 	var WSWriter = make(chan []uint8, 1024)
+	isWaitJob := false
+	waittingJobs, err := models.GetMsgFromList("DockerJobList", 0, -1)
+	if err != nil {
+		log.Println("[ErrorInfo]", err)
+	}
+	for _, v := range waittingJobs {
+		if strings.Index(v, id) != -1 {
+			msg := "waitting build ..."
+			if err := ws.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
+				log.Println("[ErrorInfo]", err.Error())
+				return
+			}
+			isWaitJob = true
+		}
+	}
+	if isWaitJob {
+		return
+	}
+	len, err := models.GetListLength("buildLog:" + id)
+	if err != nil {
+		log.Println("[ErrorInfo]", err)
+	}
+	if len == int64(0) {
+		msg := "invalid id ..."
+		if err := ws.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
+			log.Println("[ErrorInfo]", err.Error())
+		}
+		return
+	}
 	// push data in channel to socket
 	go PushMsg(ws, WSWriter)
 	// get build log history and push to channel
@@ -100,7 +130,7 @@ func PushMsg(ws *websocket.Conn, WSWriter chan []uint8) {
 
 		// write message to client
 		if err := ws.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-			log.Println("Can't send", err.Error())
+			log.Println("[ErrorInfo]", err.Error())
 			break
 		}
 
@@ -116,7 +146,7 @@ func PushMsg(ws *websocket.Conn, WSWriter chan []uint8) {
 func getAllOldLogById(id string, WSWriter chan []uint8) {
 	strs, err := models.GetMsgFromList("buildLog:"+id, int64(0), int64(-1))
 	if err != nil {
-		log.Println("[error when get history log]", err)
+		log.Println("[ErrorInfo]", err)
 	}
 
 	for _, str := range strs {
