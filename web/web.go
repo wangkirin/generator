@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
 
 	"github.com/containerops/generator/middleware"
 	"github.com/containerops/generator/router"

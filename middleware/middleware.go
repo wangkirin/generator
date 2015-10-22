@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
 )
 
 func SetMiddlewares(m *macaron.Macaron) {

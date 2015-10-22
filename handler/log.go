@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Unknwon/macaron"
 	"github.com/gorilla/websocket"
+	"gopkg.in/macaron.v1"
 
 	"github.com/containerops/generator/models"
 )
