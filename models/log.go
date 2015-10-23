@@ -57,3 +57,21 @@ func PublishMsg(channelName, msg string) error {
 	_, err := db.Client.Publish(channelName, msg).Result()
 	return err
 }
+
+func WrapListMsg(listName string) error {
+	_, err := db.Client.LTrim(listName, int64(0), int64(0)).Result()
+	if err != nil {
+		return err
+	}
+	_, err = db.Client.LPop(listName).Result()
+	return err
+}
+
+func MoveFromListByValue(listName, value string, count int64) error {
+	_, err := db.Client.LRem(listName, count, value).Result()
+	return err
+}
+
+func GetListLength(listName string) (int64, error) {
+	return db.Client.LLen(listName).Result()
+}

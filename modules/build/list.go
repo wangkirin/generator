@@ -17,7 +17,7 @@ import (
 func LoadBuildList(path string) error {
 	er := db.InitDB(setting.DBURI, setting.DBPasswd, setting.DBDB)
 	if er != nil {
-		log.Println(er)
+		log.Println("[ErrorInfo]", er.Error())
 	}
 
 	// get current file path
@@ -29,6 +29,7 @@ func LoadBuildList(path string) error {
 	if err := json.Unmarshal([]byte(result), &list); err != nil {
 		return err
 	} else {
+		wrapRedisListInfo()
 		saveToRedis(list)
 	}
 	return nil
@@ -56,11 +57,17 @@ type BuilderInfo struct {
 	PORT string `json:"port"`
 }
 
+func wrapRedisListInfo() {
+	models.WrapListMsg("DockerList")
+	models.WrapListMsg("BusyWorkerList")
+	models.WrapListMsg("FreeWorkerList")
+}
+
 func saveToRedis(list BuilderList) {
 	for _, v := range list.Dockers {
-		err := models.SaveMsgToSet("DockerList", v.IP+":"+v.PORT)
+		err := models.PushMsgToList("DockerList", v.IP+":"+v.PORT)
 		if err != nil {
-			log.Println("err when save docker build list", err)
+			log.Println("[ErrorInfo]", err.Error())
 		}
 	}
 
