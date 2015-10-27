@@ -29,23 +29,22 @@ var unhandleJobList chan *Job
 
 func Build(ctx *macaron.Context) string {
 
-	log.Println("add to job list")
-
 	job := new(Job)
 	job.Name = ctx.Query("imagename")
 	job.DockerFile = ctx.Query("dockerfile")
 	job.Tag = geneGuid()
 	addJob(job)
+
 	return job.Tag
 }
 
 func geneGuid() string {
-	b := make([]byte, 48)
+	guidBuff := make([]byte, 48)
 
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+	if _, err := io.ReadFull(rand.Reader, guidBuff); err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 	}
-	return utils.MD5(base64.URLEncoding.EncodeToString(b))
+	return utils.MD5(base64.URLEncoding.EncodeToString(guidBuff))
 }
 
 func BuildDockerImageStartByHTTPReq(worker, imageName string, dockerfileTarReader io.Reader, tag string) {
@@ -104,11 +103,13 @@ func BuildDockerImageStartByHTTPReq(worker, imageName string, dockerfileTarReade
 func InitHandlerList() {
 	freeWorkerList = make(chan string, 65535)
 	unhandleJobList = make(chan *Job, 65535)
+
 	// get all worker list
 	workers, err := models.GetMsgFromList("DockerList", int64(0), int64(-1))
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 	}
+
 	for _, v := range workers {
 		addWorker(v)
 	}
@@ -118,6 +119,7 @@ func InitHandlerList() {
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 	}
+
 	for _, v := range jobs {
 		temp := new(Job)
 		err := json.Unmarshal([]byte(v), temp)
@@ -126,6 +128,7 @@ func InitHandlerList() {
 		}
 		unhandleJobList <- temp
 	}
+
 	go handleJob()
 }
 
@@ -141,6 +144,7 @@ func addJob(job *Job) {
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 	}
+
 	models.PushMsgToList("DockerJobList", string(msg))
 	unhandleJobList <- job
 }
@@ -155,31 +159,39 @@ func handleJob() {
 		if err != nil {
 			log.Println("[ErrorInfo]", err)
 		}
+
 		models.MoveFromListByValue("DockerJobList", string(jobStr), 0)
-		log.Println("worker:", worker, "start a new job")
 		busyWorkerList = append(busyWorkerList, worker)
 		models.PushMsgToList("BusyWorkerList", worker)
+
 		go BuildDockerImageStartByHTTPReq(worker, job.Name, tarDockerFile(job.DockerFile), job.Tag)
 	}
 }
 
 // add a docker machine to worker list
 func finishJob(addr string) {
+
 	models.MoveFromListByValue("BusyWorkerList", addr, 0)
+
 	// add worker to freeWorkerList
 	freeWorkerList <- addr
+
 	// cycle busyWorkerList to remove this worker
 	temp := make(chan string, 65535)
+
 	for _, v := range busyWorkerList {
 		if v != addr {
 			temp <- v
 		}
 	}
+
 	freeWorkerList = temp
 }
 
 func tarDockerFile(dockerfile string) io.Reader {
+
 	dockerfileBytes, err := base64.StdEncoding.DecodeString(dockerfile)
+
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 	}
@@ -196,6 +208,7 @@ func tarDockerFile(dockerfile string) io.Reader {
 	}{
 		{"Dockerfile", string(dockerfileBytes)},
 	}
+
 	for _, file := range files {
 		hdr := &tar.Header{
 			Name: file.Name,
@@ -209,10 +222,13 @@ func tarDockerFile(dockerfile string) io.Reader {
 			log.Fatalln(err)
 		}
 	}
+
 	// Make sure to check the error on Close.
 	if err := tw.Close(); err != nil {
 		log.Fatalln(err)
 	}
+
 	tarReader := bytes.NewReader(buf.Bytes())
+
 	return tarReader
 }
