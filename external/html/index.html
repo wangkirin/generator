@@ -69,7 +69,7 @@ $(function() {
             imagename: imagename,
             dockerfile: base64_str,
         };
-        $.get('/v1/build/', submitData,
+        $.get('/b1/build/', submitData,
         function(data) {
             appendLog($("<div>you can get build log through websocket:" + data + "</div>"));
     	    appendLog($("<div>the url is ws:///wsbuildlog</div>"));
@@ -92,7 +92,7 @@ function appendLog(msg) {
 }
 
 function getLog(logid, count) {
-    $.get('/v1/build/log/http/'+logid, {
+    $.get('/b1/build/log/http/'+logid, {
 	count: count,
     },
     function(data) {

@@ -8,8 +8,7 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
 
 	"github.com/containerops/generator/web"
 	"github.com/containerops/wrench/setting"
