@@ -82,6 +82,5 @@ passwd = containerops
 db = 8
 
 [generator]
-genurl = containerops.me
 dockerfilepath  = /tmp
 ```
