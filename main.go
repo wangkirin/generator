@@ -9,12 +9,18 @@ import (
 	"github.com/containerops/wrench/setting"
 )
 
-func main() {
-
+func init() {
 	if err := setting.SetConfig("conf/containerops.conf"); err != nil {
 		fmt.Printf("Read config error: %s", err.Error())
 	}
+}
 
+func main() {
+	/*
+		if err := setting.SetConfig("conf/containerops.conf"); err != nil {
+			fmt.Printf("Read config error: %s", err.Error())
+		}
+	*/
 	app := cli.NewApp()
 
 	app.Name = setting.AppName

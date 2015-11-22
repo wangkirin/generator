@@ -164,17 +164,13 @@ func (client *DockerClient) BuildImage(image *BuildImage) (io.ReadCloser, error)
 	if image.Pull {
 		v.Set("pull", "1")
 	}
-	if image.Remove {
-		v.Set("rm", "1")
-	} else {
-		v.Set("rm", "0")
-	}
-	if image.ForceRemove {
-		v.Set("forcerm", "1")
-	}
+
 	if image.SuppressOutput {
 		v.Set("q", "1")
 	}
+
+	v.Set("rm", "1")
+	v.Set("forcerm", "1")
 
 	v.Set("memory", strconv.FormatInt(image.Memory, 10))
 	v.Set("memswap", strconv.FormatInt(image.MemorySwap, 10))
@@ -194,10 +190,15 @@ func (client *DockerClient) BuildImage(image *BuildImage) (io.ReadCloser, error)
 	return client.doStreamRequest("POST", uri, image.Context, headers)
 }
 
-func (client *DockerClient) PushImage(image *BuildImage) (io.ReadCloser, error) {
+func (client *DockerClient) PushImage(repo, tag string, image *BuildImage) (io.ReadCloser, error) {
 
 	headers := make(map[string]string)
 	headers["X-Registry-Auth"] = "Og=="
-	uri := fmt.Sprintf("/images/%s/push", image.RepoName)
+	uri := fmt.Sprintf("/images/%s/push?tag=%s", repo, tag)
 	return client.doStreamRequest("POST", uri, image.Context, headers)
+}
+
+func (client *DockerClient) Info() (io.ReadCloser, error) {
+	uri := fmt.Sprintf("/version")
+	return client.doStreamRequest("GET", uri, nil, nil)
 }
