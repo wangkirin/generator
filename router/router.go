@@ -16,7 +16,7 @@ func SetRouters(m *macaron.Macaron) {
 		})
 
 		m.Group("/log", func() {
-			m.Get("/:protocol/:id", handler.log)
+			m.Get("/:protocol/:id", handler.Log)
 		})
 
 		m.Group("/job", func() {
