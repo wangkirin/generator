@@ -12,14 +12,14 @@ import (
 )
 
 const (
-	DEFAULT_DockerfileName = ""
-	DEFAULT_RemoteURL      = ""
-	DEFAULT_RepoName       = ""
-	DEFAULT_SuppressOutput = true
-	DEFAULT_NoCache        = true
-	DEFAULT_Remove         = true
-	DEFAULT_ForceRemove    = true
-	DEFAULT_Pull           = true
+	DEFAULT_DOCKERFILENAME = ""
+	DEFAULT_REMOTEURL      = ""
+	DEFAULT_REPONAME       = ""
+	DEFAULT_SUPPRESSOUTPUT = true
+	DEFAULT_NOCACHE        = true
+	DEFAULT_REMOVE         = true
+	DEFAULT_FORCEREMOVE    = true
+	DEFAULT_PULL           = true
 )
 
 type RequestStruct struct {
