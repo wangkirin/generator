@@ -1,75 +1,61 @@
-# Generator
-===========
+# Generator - A docker image builder
 
-##Send Dockerfile To Generator Service
+Generator is a conventional Docker image builder that simply accepts webhooks from any Github repository, builds an image for that repository, and pushes it to the supplied registry.
 
+## How it works
+
+## Usage
+
+### Compile
+
+Compile is as simple as:
+
+```bash
+# create a 'github.com/containerops' directory in your GOPATH/src
+cd github.com/containerops
+git clone https://github.com/containerops/generator
+cd generator
+go build
 ```
-FROM       ubuntu
-MAINTAINER MengFanliang <mengfanliang@huawei.com>
 
-ENV TZ "Asia/Shanghai"
-ENV TERM xterm
+### Configuration
 
-RUN apt-get install wget -y
+#### Deploy dockyard
 
-RUN wget https://get.docker.com/builds/Darwin/x86_64/docker-latest
+As the default registry for generator, dockyard should be deployed starting `generator` service. You can follow the [instruction](https://github.com/containerops/dockyard#try-it-out) to complete the operation.
 
+#### Deploy docker build resource pool
 
-EXPOSE 22
-```
-
-## conf/pool.json
+Add a config file named `pool.json` at `generator/conf` directory before starting `generator` service. Below is a `pool.json` example:
 
 ```
 {
    "docker":[
       {
-         "url":"192.168.199.102",
-         "port":"9999"
+         "url":"127.0.0.1",
+         "port":"19000"
       },
       {
-         "url":"192.168.199.103",
-         "port":"9999"
+         "url":"127.0.0.1",
+         "port":"19100"
       }
    ]
 }
 ```
 
-## WebSocket Get Build log URL 
+Run docker daemon corresponding to the pool.json
 
-```
-Method : GET
-URL : ws://containerops.me/ws
-
-{"id":"a95d9886304920ad3437aeb2c7cea2a3"}
+```bash
+$ docker daemon --insecure-registry=containerops.me -iptables=false -H :19000 -g /opt/docker-data/19000 &
+$ docker daemon --insecure-registry=containerops.me -iptables=false -H :19100 -g /opt/docker-data/19100 &
 ```
 
-## HTTP Get Build log URL 
-
-```
-Method : POST
-URL : https://containerops.me/v1/build/log/cd48ff1786c2dd8d86172662b07a8103
-```
-
-## HTTP Test URL 
-```
-URL : https://containerops.me/html/index.html
-```
-
-## Send Build Dockerfile
-
-```
-Method : POST
-URL : http://192.168.199.10:8080/v1/build
-Param : imagename=containerops.me:5000/fsk/hw2ubuntu:15.04&dockerfile=(BASE64DockerFile)
-Return{LogID} : 9a1df7f8833cbb706f45a00882e200f7
-```
-
-## runtime.conf
+#### Config runtime parameters
+Add a config file named `runtime.conf` at `generator/conf` directory before starting `generator` service. Below is a `runtime.conf` example:
 
 ```
 runmode = dev
-listenmode = https
+listenmode = http
 httpscertfile = cert/containerops/containerops.crt
 httpskeyfile = cert/containerops/containerops.key
 
@@ -84,4 +70,54 @@ db = 8
 [generator]
 genurl = containerops.me
 dockerfilepath  = /tmp
+```
+
+### Run
+
+Start `generator` service:
+
+```bash
+$ ./generator web &
+```
+
+### Examples
+
+#### Triggering a build
+
+* Preparing Dockerfile
+```
+FROM       ubuntu
+
+MAINTAINER Cheng Tiesheng <chengtiesheng@huawei.com>
+
+ENV TERM xterm
+
+EXPOSE 80
+```
+
+* Encoding Dockerfile by Base64
+```
+RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVuZ0BodWF3ZWkuY29tPg0KDQpFTlYgVEVSTSB4dGVybQ0KDQpFWFBPU0UgODA=
+```
+
+* Use Web broswer to trigger REST API call
+```
+http://localhost:8080/b1/build?imagename=containerops.me/cts/example&dockerfile=RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVuZ0BodWF3ZWkuY29tPg0KDQpFTlYgVEVSTSB4dGVybQ0KDQpFWFBPU0UgODA=
+```
+
+Then you will ge a job id such as:
+```
+f96ab2530d17c08716d2850d17c08729
+```
+
+* Following the progress of a build
+You can get the build log by using web socket:
+```
+ws://localhost:8080/b1/build/log/ws/f96ab2530d17c08716d2850d17c08729
+```
+
+* Get docker image from dockyard
+Now, the docker image containerops.me/cts/example has been pushed to dockyard, you can get it by using docker pull:
+```
+docker pull containerops.me/cts/example
 ```
