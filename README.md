@@ -6,7 +6,7 @@ Generator is a conventional Docker image builder that simply accepts webhooks fr
 
 * Generator receives a build request, for example, via a GitHub commit webhook.
 * Generator builds and tags the resulting image.
-* It then pushes the image to the Docker registry such as dockyard.
+* Generator then pushes the image to the supplied Docker registry such as dockyard.
 
 ## Usage
 
@@ -23,6 +23,8 @@ go build
 ```
 
 ### Configuration
+
+Before using `generator` service, some prerequisites should be done first.
 
 #### Deploy dockyard
 
