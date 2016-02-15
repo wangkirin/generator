@@ -4,6 +4,10 @@ Generator is a conventional Docker image builder that simply accepts webhooks fr
 
 ## How it works
 
+* Generator receives a build request, for example, via a GitHub commit webhook.
+* Generator builds and tags the resulting image.
+* It then pushes the image to the Docker registry such as dockyard.
+
 ## Usage
 
 ### Compile
@@ -101,6 +105,7 @@ RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVu
 ```
 
 * Use Web broswer to trigger REST API call
+
 ```
 http://localhost:8080/b1/build?imagename=containerops.me/cts/example&dockerfile=RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVuZ0BodWF3ZWkuY29tPg0KDQpFTlYgVEVSTSB4dGVybQ0KDQpFWFBPU0UgODA=
 ```
@@ -111,12 +116,14 @@ f96ab2530d17c08716d2850d17c08729
 ```
 
 * Following the progress of a build
+
 You can get the build log by using web socket:
 ```
 ws://localhost:8080/b1/build/log/ws/f96ab2530d17c08716d2850d17c08729
 ```
 
 * Get docker image from dockyard
+
 Now, the docker image containerops.me/cts/example has been pushed to dockyard, you can get it by using docker pull:
 ```
 docker pull containerops.me/cts/example
