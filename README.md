@@ -30,9 +30,89 @@ Before using `generator` service, some prerequisites should be done first.
 
 As the default registry for generator, dockyard should be deployed starting `generator` service. You can follow the [instruction](https://github.com/containerops/dockyard#try-it-out) to complete the operation.
 
+#### Deploy redis service
+
+* Download and install redis package:
+
+```bash
+$ curl -sL http://download.redis.io/releases/redis-stable.tar.gz | tar xzf - -C /tmp --strip 1
+$ make -C /tmp
+$ make -C /tmp install
+$ mkdir /var/lib/redis
+```
+
+* Add redis.conf at `etc/redis` directory:
+
+```
+daemonize yes
+pidfile /var/run/redis.pid
+port 6379
+tcp-backlog 511
+bind 127.0.0.1
+timeout 0
+tcp-keepalive 0
+loglevel notice
+logfile ""
+databases 16
+save 900 1
+save 300 10
+save 60 10000
+stop-writes-on-bgsave-error yes
+rdbcompression yes
+rdbchecksum yes
+dbfilename dump.rdb
+dir /var/lib/redis
+slave-serve-stale-data yes
+slave-read-only yes
+repl-disable-tcp-nodelay no
+slave-priority 100
+requirepass containerops
+appendonly no
+appendfilename "appendonly.aof"
+appendfsync everysec
+no-appendfsync-on-rewrite no
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+lua-time-limit 5000
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+notify-keyspace-events ""
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+list-max-ziplist-entries 512
+list-max-ziplist-value 64
+set-max-intset-entries 512
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+hll-sparse-max-bytes 3000
+activerehashing yes
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit slave 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+hz 10
+aof-rewrite-incremental-fsync yes
+```
+
+* Start redis service:
+
+```bash
+$ redis-server /etc/redis/redis.conf
+```
+
+* Test redis service:
+
+```bash
+$ redis-cli
+127.0.0.1:6379> auth containerops
+OK
+127.0.0.1:6379> ping
+PONG
+127.0.0.1:6379> 
+```
+
 #### Deploy docker build resource pool
 
-Add a config file named `pool.json` at `generator/conf` directory before starting `generator` service. Below is a `pool.json` example:
+* Add a config file named `pool.json` at `generator/conf` directory before starting `generator` service. Below is a `pool.json` example:
 
 ```
 {
@@ -49,7 +129,7 @@ Add a config file named `pool.json` at `generator/conf` directory before startin
 }
 ```
 
-Run docker daemon corresponding to the pool.json
+* Run docker daemon corresponding to the pool.json
 
 ```bash
 $ docker daemon --insecure-registry=containerops.me -iptables=false -H :19000 -g /opt/docker-data/19000 &
