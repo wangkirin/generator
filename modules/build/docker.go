@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -126,6 +127,12 @@ func (client *DockerClient) doStreamRequest(method string, path string, in io.Re
 	}
 
 	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		if !strings.Contains(err.Error(), "connection refused") && client.TLSConfig == nil {
+			return nil, fmt.Errorf("%v", "Are you trying to connect to a TLS-enabled daemon without TLS?", err)
+		}
+		return nil, err
+	}
 	if resp.StatusCode == 200 {
 		return resp.Body, nil
 	} else if resp.StatusCode == 400 || resp.StatusCode == 404 || resp.StatusCode == 409 || resp.StatusCode == 500 {

@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 
 	"gopkg.in/macaron.v1"
 
@@ -88,44 +87,46 @@ func BuildDockerImageStartByHTTPReq(worker string, job *Job) {
 	if err != nil {
 		log.Println("[ErrorInfo]", err.Error())
 
-	}
+	} else if reader != nil {
+		buf := make([]byte, 4096)
 
-	buf := make([]byte, 4096)
+		for {
+			n, err := reader.Read(buf)
+			if err != nil && err != io.EOF {
+				panic(err)
+			}
 
-	for {
-		n, err := reader.Read(buf)
-		if err != nil && err != io.EOF {
-			panic(err)
-		}
-
-		if strings.Contains(string(buf[:n]), `"stream":"Successfully built`) {
 			dockerClient.PushImage(&(job.ImageConfig))
-		}
 
-		if 0 == n {
-			err = models.PushMsgToList("buildLog:"+job.Tag, "bye")
+			if 0 == n {
+				err = models.PushMsgToList("buildLog:"+job.Tag, "bye")
+				if err != nil {
+					log.Println("[ErrorInfo]", err.Error())
+				}
+
+				err = models.PublishMsg("buildLog:"+job.Tag, "bye")
+				if err != nil {
+					log.Println("[ErrorInfo]", err.Error())
+				}
+				finishJob(worker)
+				break
+			}
+
+			err = models.PushMsgToList("buildLog:"+job.Tag, string(buf[:n]))
 			if err != nil {
 				log.Println("[ErrorInfo]", err.Error())
 			}
 
-			err = models.PublishMsg("buildLog:"+job.Tag, "bye")
+			err = models.PublishMsg("buildLog:"+job.Tag, string(buf[:n]))
 			if err != nil {
 				log.Println("[ErrorInfo]", err.Error())
 			}
-			finishJob(worker)
-			break
 		}
+	} else {
 
-		err = models.PushMsgToList("buildLog:"+job.Tag, string(buf[:n]))
-		if err != nil {
-			log.Println("[ErrorInfo]", err.Error())
-		}
-
-		err = models.PublishMsg("buildLog:"+job.Tag, string(buf[:n]))
-		if err != nil {
-			log.Println("[ErrorInfo]", err.Error())
-		}
+		log.Println("[ErrorInfo]", err.Error())
 	}
+
 }
 
 func InitHandlerList() {
