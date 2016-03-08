@@ -88,7 +88,7 @@ $ ./generator web &
 
 ### Examples
 
-#### Triggering a build
+#### Triggering a build by dockerfile
 
 * Preparing Dockerfile
 ```
@@ -109,7 +109,7 @@ RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVu
 * Use Web broswer to trigger REST API call
 
 ```
-http://localhost:8080/b1/build?imagename=containerops.me/cts/example&dockerfile=RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVuZ0BodWF3ZWkuY29tPg0KDQpFTlYgVEVSTSB4dGVybQ0KDQpFWFBPU0UgODA=
+http://localhost:8080/b1/build?mode=dockerfile&imagename=containerops.me/cts/example&context=RlJPTSAgICAgICB1YnVudHUNCg0KTUFJTlRBSU5FUiBDaGVuZyBUaWVzaGVuZyA8Y2hlbmd0aWVzaGVuZ0BodWF3ZWkuY29tPg0KDQpFTlYgVEVSTSB4dGVybQ0KDQpFWFBPU0UgODA=
 ```
 
 Then you will ge a job id such as:
@@ -130,3 +130,26 @@ Now, the docker image containerops.me/cts/example has been pushed to dockyard, y
 ```
 docker pull containerops.me/cts/example
 ```
+     
+#### trigger a build by a archive     
+    
+* Prepare archive including dockerfile
+     
+Using [hello-world](https://github.com/docker-library/hello-world/tree/b7a78b7ccca62cc478919b101f3ab1334899df2b) as a example    
+Download it from github  
+```          
+cd hello-world     
+tar cvf hello.tar * 
+mkdir /tmp
+cp hello.tar /tmp/
+  
+```    
+* Use web browser to trigger REST API CALL     
+```    
+http://localhost:8080/b1/build?mode=archive&imagename=containerops.me/cts/example&context=/tmp/hello.tar   
+```     
+* Debug and get logs   
+      
+Debug and get logs as the way in topic 'trigger a build by dockerfile'   
+
+
