@@ -10,13 +10,12 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	APIVersion = "v1.20"
+	APIVersion = "v1.21"
 )
 
 var (
@@ -41,21 +40,24 @@ type Client interface {
 	BuildImage(image *BuildImage) (io.ReadCloser, error)
 }
 
+// BuildImage : config for buildImage()
+// Note:because it is recepted as params from restful call and to be setted to url.values{},
+// The type of them are all string
 type BuildImage struct {
-	DockerfileName string
+	Dockerfile     string
 	Context        io.Reader
 	RemoteURL      string
 	RepoName       string
-	SuppressOutput bool
-	NoCache        bool
-	Remove         bool
-	ForceRemove    bool
-	Pull           bool
-	Memory         int64
-	MemorySwap     int64
-	CpuShares      int64
-	CpuPeriod      int64
-	CpuQuota       int64
+	SuppressOutput string
+	NoCache        string
+	Remove         string
+	ForceRemove    string
+	Pull           string
+	Memory         string
+	MemorySwap     string
+	CpuShares      string
+	CpuPeriod      string
+	CpuQuota       string
 	CpuSetCpus     string
 	CpuSetMems     string
 	CgroupParent   string
@@ -123,17 +125,17 @@ func (client *DockerClient) doStreamRequest(method string, path string, in io.Re
 			req.Header.Add(header, value)
 		}
 	}
+
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
 		if !strings.Contains(err.Error(), "connection refused") && client.TLSConfig == nil {
-			return nil, fmt.Errorf("%v. Are you trying to connect to a TLS-enabled daemon without TLS?", err)
+			return nil, fmt.Errorf("%v", "Are you trying to connect to a TLS-enabled daemon without TLS?", err)
 		}
 		return nil, err
 	}
-	if resp.StatusCode == 404 {
-		return nil, ErrNotFound
-	}
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode == 200 {
+		return resp.Body, nil
+	} else if resp.StatusCode == 400 || resp.StatusCode == 404 || resp.StatusCode == 409 || resp.StatusCode == 500 {
 		defer resp.Body.Close()
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -141,49 +143,77 @@ func (client *DockerClient) doStreamRequest(method string, path string, in io.Re
 		}
 		return nil, Error{StatusCode: resp.StatusCode, Status: resp.Status, msg: string(data)}
 	}
-
-	return resp.Body, nil
+	return resp.Body, errors.New("Unknown err from server")
 }
 
 // Todo : need delete build temp containers
 func (client *DockerClient) BuildImage(image *BuildImage) (io.ReadCloser, error) {
+
 	v := url.Values{}
 
-	if image.DockerfileName != "" {
-		v.Set("dockerfile", image.DockerfileName)
+	if image.Dockerfile != "" {
+		v.Set("dockerfile", image.Dockerfile)
 	}
+
 	if image.RepoName != "" {
 		v.Set("t", image.RepoName)
+	} else {
+		return nil, errors.New("Empty reponame, required params")
 	}
+
 	if image.RemoteURL != "" {
 		v.Set("remote", image.RemoteURL)
 	}
-	if image.NoCache {
-		v.Set("nocache", "1")
-	}
-	if image.Pull {
-		v.Set("pull", "1")
-	}
-	if image.Remove {
-		v.Set("rm", "1")
-	} else {
-		v.Set("rm", "0")
-	}
-	if image.ForceRemove {
-		v.Set("forcerm", "1")
-	}
-	if image.SuppressOutput {
-		v.Set("q", "1")
+
+	if image.NoCache != "" {
+		v.Set("nocache", image.NoCache)
 	}
 
-	v.Set("memory", strconv.FormatInt(image.Memory, 10))
-	v.Set("memswap", strconv.FormatInt(image.MemorySwap, 10))
-	v.Set("cpushares", strconv.FormatInt(image.CpuShares, 10))
-	v.Set("cpuperiod", strconv.FormatInt(image.CpuPeriod, 10))
-	v.Set("cpuquota", strconv.FormatInt(image.CpuQuota, 10))
-	v.Set("cpusetcpus", image.CpuSetCpus)
-	v.Set("cpusetmems", image.CpuSetMems)
-	v.Set("cgroupparent", image.CgroupParent)
+	if image.Pull != "" {
+		v.Set("pull", image.Pull)
+	}
+
+	if image.Remove != "" {
+		v.Set("rm", image.Remove)
+	}
+
+	if image.ForceRemove != "" {
+		v.Set("forcerm", image.ForceRemove)
+	}
+
+	if image.SuppressOutput != "" {
+		v.Set("q", image.SuppressOutput)
+	}
+
+	if image.Memory != "" {
+		v.Set("memory", image.Memory)
+	}
+	if image.MemorySwap != "" {
+		v.Set("memoryswap", image.MemorySwap)
+	}
+	if image.CpuShares != "" {
+		v.Set("cpushares", image.CpuShares)
+	}
+
+	if image.CpuPeriod != "" {
+		v.Set("cpuperiod", image.CpuPeriod)
+	}
+
+	if image.CpuQuota != "" {
+		v.Set("cpuquota", image.CpuQuota)
+	}
+
+	if image.CpuSetCpus != "" {
+		v.Set("cpusetcpus", image.CpuSetCpus)
+	}
+
+	if image.CpuSetMems != "" {
+		v.Set("cpusetmems", image.CpuSetMems)
+	}
+
+	if image.CgroupParent != "" {
+		v.Set("cgroupparent", image.CgroupParent)
+	}
 
 	headers := make(map[string]string)
 	if image.Context != nil {

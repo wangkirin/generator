@@ -6,9 +6,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io"
+	"io/ioutil"
 	"log"
-	"strings"
+	"os"
 
 	"gopkg.in/macaron.v1"
 
@@ -18,9 +20,15 @@ import (
 )
 
 type Job struct {
-	Name       string `json:"name"`
-	DockerFile string `json:"dockerfile"`
-	Tag        string `json:"tag"`
+	Name string `json:"name"`
+	// Mode :set tar or dockerfile to enable different mode
+	Mode        string     `json:mode`
+	DockerFile  string     `json:"dockerfile"`
+	ImageConfig BuildImage `json:"buildimage"`
+	// Context : when mode == "dockerfile", context is the content of dockerfile
+	// when mode == "archive", context is the path to the archive path
+	Context string `"json:context"`
+	Tag     string `json:"tag"`
 }
 
 var freeWorkerList chan string
@@ -28,14 +36,38 @@ var busyWorkerList []string
 var unhandleJobList chan *Job
 
 func Build(ctx *macaron.Context) string {
-
 	job := new(Job)
+
+	job.Mode = ctx.Query("mode")
 	job.Name = ctx.Query("imagename")
-	job.DockerFile = ctx.Query("dockerfile")
+	job.Context = ctx.Query("context")
+
+	setImage(job, ctx)
+
 	job.Tag = geneGuid()
+
 	addJob(job)
 
 	return job.Tag
+}
+
+// SetImage , set build config to job.ImageConfig from restapi of /build
+func setImage(job *Job, ctx *macaron.Context) {
+	job.ImageConfig.Dockerfile = ctx.Query("dockerfile")
+	job.ImageConfig.RemoteURL = ctx.Query("remoteurl")
+	job.ImageConfig.RepoName = ctx.Query("imagename")
+	job.ImageConfig.SuppressOutput = ctx.Query("suppressoutput")
+	job.ImageConfig.NoCache = ctx.Query("nocache")
+	job.ImageConfig.ForceRemove = ctx.Query("forceremove")
+	job.ImageConfig.Pull = ctx.Query("pull")
+	job.ImageConfig.Memory = ctx.Query("memory")
+	job.ImageConfig.MemorySwap = ctx.Query("memoryswap")
+	job.ImageConfig.CpuShares = ctx.Query("cpushares")
+	job.ImageConfig.CpuPeriod = ctx.Query("cpuperiod")
+	job.ImageConfig.CpuQuota = ctx.Query("cpuquota")
+	job.ImageConfig.CpuSetCpus = ctx.Query("cpusetcpus")
+	job.ImageConfig.CpuSetMems = ctx.Query("cpusetmems")
+	job.ImageConfig.CgroupParent = ctx.Query("cgroupparent")
 }
 
 func geneGuid() string {
@@ -47,57 +79,54 @@ func geneGuid() string {
 	return utils.MD5(base64.URLEncoding.EncodeToString(guidBuff))
 }
 
-func BuildDockerImageStartByHTTPReq(worker, imageName string, dockerfileTarReader io.Reader, tag string) {
+func BuildDockerImageStartByHTTPReq(worker string, job *Job) {
 
 	dockerClient, _ := NewDockerClient(worker, nil)
 
-	buildImageConfig := &BuildImage{
-		Context:        dockerfileTarReader,
-		RepoName:       imageName,
-		SuppressOutput: true,
-	}
-
-	reader, err := dockerClient.BuildImage(buildImageConfig)
+	reader, err := dockerClient.BuildImage(&(job.ImageConfig))
 	if err != nil {
+		log.Println("[ErrorInfo]", err.Error())
+
+	} else if reader != nil {
+		buf := make([]byte, 4096)
+
+		for {
+			n, err := reader.Read(buf)
+			if err != nil && err != io.EOF {
+				panic(err)
+			}
+
+			dockerClient.PushImage(&(job.ImageConfig))
+
+			if 0 == n {
+				err = models.PushMsgToList("buildLog:"+job.Tag, "bye")
+				if err != nil {
+					log.Println("[ErrorInfo]", err.Error())
+				}
+
+				err = models.PublishMsg("buildLog:"+job.Tag, "bye")
+				if err != nil {
+					log.Println("[ErrorInfo]", err.Error())
+				}
+				finishJob(worker)
+				break
+			}
+
+			err = models.PushMsgToList("buildLog:"+job.Tag, string(buf[:n]))
+			if err != nil {
+				log.Println("[ErrorInfo]", err.Error())
+			}
+
+			err = models.PublishMsg("buildLog:"+job.Tag, string(buf[:n]))
+			if err != nil {
+				log.Println("[ErrorInfo]", err.Error())
+			}
+		}
+	} else {
+
 		log.Println("[ErrorInfo]", err.Error())
 	}
 
-	buf := make([]byte, 4096)
-
-	for {
-		n, err := reader.Read(buf)
-		if err != nil && err != io.EOF {
-			panic(err)
-		}
-
-		if strings.Contains(string(buf[:n]), `"stream":"Successfully built`) {
-			dockerClient.PushImage(buildImageConfig)
-		}
-
-		if 0 == n {
-			err = models.PushMsgToList("buildLog:"+tag, "bye")
-			if err != nil {
-				log.Println("[ErrorInfo]", err.Error())
-			}
-
-			err = models.PublishMsg("buildLog:"+tag, "bye")
-			if err != nil {
-				log.Println("[ErrorInfo]", err.Error())
-			}
-			finishJob(worker)
-			break
-		}
-
-		err = models.PushMsgToList("buildLog:"+tag, string(buf[:n]))
-		if err != nil {
-			log.Println("[ErrorInfo]", err.Error())
-		}
-
-		err = models.PublishMsg("buildLog:"+tag, string(buf[:n]))
-		if err != nil {
-			log.Println("[ErrorInfo]", err.Error())
-		}
-	}
 }
 
 func InitHandlerList() {
@@ -163,9 +192,30 @@ func handleJob() {
 		models.MoveFromListByValue("DockerJobList", string(jobStr), 0)
 		busyWorkerList = append(busyWorkerList, worker)
 		models.PushMsgToList("BusyWorkerList", worker)
+		var in io.Reader
+		if job.Mode == "dockerfile" {
+			in = tarDockerFile(job.Context)
+		} else if job.Mode == "archive" {
+			in = readArchive(job.Context)
+		} else {
+			log.Printf("[ErrorInfo] : %v\n", errors.New("Wrong mode, required mode exactly."))
+		}
 
-		go BuildDockerImageStartByHTTPReq(worker, job.Name, tarDockerFile(job.DockerFile), job.Tag)
+		job.ImageConfig.Context = in
+
+		go BuildDockerImageStartByHTTPReq(worker, job)
 	}
+}
+
+func readArchive(archivePath string) io.Reader {
+	f, err := os.Open(archivePath)
+	if err != nil {
+		log.Println("[ErrorInfo]", err)
+	}
+	defer f.Close()
+	buf, _ := ioutil.ReadAll(f)
+
+	return bytes.NewReader(buf)
 }
 
 // add a docker machine to worker list
